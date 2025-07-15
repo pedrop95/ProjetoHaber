@@ -20,3 +20,21 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+
+# PROJETOHABER/backend/projeto_haber_backend/urls.py
+
+from django.contrib import admin
+from django.urls import path, include
+
+# Importe os routers das suas apps
+from produtos.urls import router as produtos_router
+from elementos.urls import router as elementos_router
+from analises.urls import router as analises_router
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    # Inclua as URLs das suas APIs aqui. Usaremos o prefixo 'api/'
+    path('api/', include(produtos_router.urls)),
+    path('api/', include(elementos_router.urls)),
+    path('api/', include(analises_router.urls)),
+]
