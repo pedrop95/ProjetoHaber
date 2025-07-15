@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Suas novas apps aqui
+    'produtos',
+    'elementos',
+    'analises',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +78,15 @@ WSGI_APPLICATION = 'projeto_haber_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'projeto_haber',         # Nome do banco de dados que você criou
+        'USER': 'haber_user',          # Nome do usuário MySQL que você criou
+        'PASSWORD': '6m;j3SEDx73l', # << SUA SENHA AQUI! Use a senha definida para 'haber_user' >>
+        'HOST': 'localhost',           # Ou '127.0.0.1'
+        'PORT': '3306',                # Porta padrão do MySQL
+        'OPTIONS': {
+            'sql_mode': 'traditional', # Opcional: Garante que o MySQL se comporte de forma mais estrita com SQL
+        }
     }
 }
 
