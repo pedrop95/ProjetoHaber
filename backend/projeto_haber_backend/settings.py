@@ -42,9 +42,11 @@ INSTALLED_APPS = [
     'elementos',
     'analises',
     'rest_framework',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -132,3 +134,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configurações CORS
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Permite requisições do seu frontend React
+    "http://127.0.0.1:3000",  # Outra forma de referenciar localhost
+    # Adicione outros domínios de frontend se necessário no futuro
+]
