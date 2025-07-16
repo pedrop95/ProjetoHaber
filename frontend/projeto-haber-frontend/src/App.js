@@ -6,8 +6,10 @@ import ProductList from './pages/ProductList';
 import ProductForm from './pages/ProductForm';
 import ElementoQuimicoList from './pages/ElementoQuimicoList';
 import ElementoQuimicoForm from './pages/ElementoQuimicoForm';
-import ConfiguracaoAnaliseList from './pages/ConfiguracaoAnaliseList'; // << NOVO IMPORT
-import ConfiguracaoAnaliseForm from './pages/ConfiguracaoAnaliseForm'; // << NOVO IMPORT
+import ConfiguracaoAnaliseList from './pages/ConfiguracaoAnaliseList';
+import ConfiguracaoAnaliseForm from './pages/ConfiguracaoAnaliseForm';
+import RegistroAnaliseList from './pages/RegistroAnaliseList'; // << NOVO IMPORT
+// import RegistroAnaliseForm from './pages/RegistroAnaliseForm'; // Será criado no próximo passo
 import './App.css';
 
 function Home() {
@@ -41,12 +43,18 @@ function App() {
               <li>
                 <Link to="/elementos/novo">Adicionar Elemento</Link>
               </li>
-              {/* << NOVOS LINKS PARA CONFIGURAÇÕES DE ANÁLISE >> */}
               <li>
                 <Link to="/configuracoes-analise">Configurações de Análise</Link>
               </li>
               <li>
                 <Link to="/configuracoes-analise/novo">Adicionar Configuração</Link>
+              </li>
+              {/* << NOVOS LINKS PARA REGISTROS DE ANÁLISE >> */}
+              <li>
+                <Link to="/registros-analise">Registros de Análise</Link>
+              </li>
+              <li>
+                <Link to="/registros-analise/novo">Adicionar Registro</Link>
               </li>
               {/* Você adicionará links para outros módulos aqui futuramente */}
             </ul>
@@ -63,10 +71,14 @@ function App() {
             <Route path="/elementos" element={<ElementoQuimicoList />} />
             <Route path="/elementos/novo" element={<ElementoQuimicoForm />} />
             <Route path="/elementos/:id/editar" element={<ElementoQuimicoForm />} />
-            {/* << NOVAS ROTAS PARA CONFIGURAÇÕES DE ANÁLISE >> */}
             <Route path="/configuracoes-analise" element={<ConfiguracaoAnaliseList />} />
             <Route path="/configuracoes-analise/novo" element={<ConfiguracaoAnaliseForm />} />
             <Route path="/configuracoes-analise/:id/editar" element={<ConfiguracaoAnaliseForm />} />
+            {/* << NOVAS ROTAS PARA REGISTROS DE ANÁLISE >> */}
+            <Route path="/registros-analise" element={<RegistroAnaliseList />} />
+            {/* A rota de formulário será adicionada no próximo passo */}
+            {/* <Route path="/registros-analise/novo" element={<RegistroAnaliseForm />} /> */}
+            {/* <Route path="/registros-analise/:id/editar" element={<RegistroAnaliseForm />} /> */}
           </Routes>
         </main>
       </div>
