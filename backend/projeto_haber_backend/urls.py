@@ -37,4 +37,5 @@ urlpatterns = [
     path('api/', include(produtos_router.urls)),
     path('api/', include(elementos_router.urls)),
     path('api/', include(analises_router.urls)),
+    path('api/', include('configuracoes.urls')),
 ]
