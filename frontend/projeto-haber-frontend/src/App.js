@@ -1,3 +1,5 @@
+// PROJETOHABER/frontend/src/App.js
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -15,7 +17,7 @@ function App() {
   return (
     <Router>
       <Navbar />
-      <div className="container mt-4">
+      <div className="container mt-4"> {/* Container para centralizar e dar padding */}
         <Routes>
           <Route path="/" element={<Home />} />
 

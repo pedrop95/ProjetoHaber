@@ -25,7 +25,7 @@ function ElementoQuimicoList() {
             axios.delete(`${API_URL}${id}/`)
                 .then(() => {
                     alert('Elemento Químico excluído com sucesso!');
-                    fetchElementos(); // Atualiza a lista após a exclusão
+                    fetchElementos();
                 })
                 .catch(error => {
                     console.error("Erro ao excluir elemento químico:", error.response ? error.response.data : error);
@@ -36,40 +36,47 @@ function ElementoQuimicoList() {
 
     return (
         <div className="container mt-4">
-            <h2>Lista de Elementos Químicos</h2>
-            <Link to="/elementos/add" className="btn btn-primary mb-3">Adicionar Novo Elemento</Link>
-            {elementos.length > 0 ? (
-                <table className="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nome</th>
-                            <th>Símbolo</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {elementos.map(elemento => (
-                            <tr key={elemento.id}>
-                                <td>{elemento.id}</td>
-                                <td>{elemento.nome}</td>
-                                <td>{elemento.simbolo}</td>
-                                <td>
-                                    <Link to={`/elementos/edit/${elemento.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
-                                    <button
-                                        onClick={() => handleDelete(elemento.id)}
-                                        className="btn btn-sm btn-danger"
-                                    >
-                                        Excluir
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>Nenhum elemento químico cadastrado ainda. Adicione um novo!</p>
-            )}
+            <h2 className="mb-4">Lista de Elementos Químicos</h2>
+            <Link to="/elementos/add" className="btn btn-primary mb-4">Adicionar Novo Elemento</Link>
+
+            <div className="card">
+                <div className="card-body">
+                    {elementos.length > 0 ? (
+                        <div className="table-responsive">
+                            <table className="table table-striped table-hover table-bordered align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Símbolo</th>
+                                        <th className="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {elementos.map(elemento => (
+                                        <tr key={elemento.id}>
+                                            <td>{elemento.id}</td>
+                                            <td>{elemento.nome}</td>
+                                            <td>{elemento.simbolo}</td>
+                                            <td className="text-center">
+                                                <Link to={`/elementos/edit/${elemento.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
+                                                <button
+                                                    onClick={() => handleDelete(elemento.id)}
+                                                    className="btn btn-sm btn-danger"
+                                                >
+                                                    Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-muted">Nenhum elemento químico cadastrado ainda. Adicione um novo!</p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

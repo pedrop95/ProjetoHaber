@@ -1,8 +1,11 @@
+// PROJETOHABER/frontend/src/index.js
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import './index.css'; // Mantenha este se você tiver um CSS padrão do create-react-app
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './custom.css'; // Importa seu CSS personalizado
 import App from './App';
-import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -10,8 +13,3 @@ root.render(
     <App />
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

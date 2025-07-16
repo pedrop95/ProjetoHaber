@@ -25,7 +25,7 @@ function ProdutoMatPrimaList() {
             axios.delete(`${API_URL}${id}/`)
                 .then(() => {
                     alert('Produto excluído com sucesso!');
-                    fetchProdutos(); // Atualiza a lista após a exclusão
+                    fetchProdutos();
                 })
                 .catch(error => {
                     console.error("Erro ao excluir produto:", error.response ? error.response.data : error);
@@ -36,40 +36,47 @@ function ProdutoMatPrimaList() {
 
     return (
         <div className="container mt-4">
-            <h2>Lista de Produtos Matéria Prima</h2>
-            <Link to="/produtos/add" className="btn btn-primary mb-3">Adicionar Novo Produto</Link>
-            {produtos.length > 0 ? (
-                <table className="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nome</th>
-                            <th>ID ou OP</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {produtos.map(produto => (
-                            <tr key={produto.id}>
-                                <td>{produto.id}</td>
-                                <td>{produto.nome}</td>
-                                <td>{produto.id_ou_op}</td>
-                                <td>
-                                    <Link to={`/produtos/edit/${produto.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
-                                    <button
-                                        onClick={() => handleDelete(produto.id)}
-                                        className="btn btn-sm btn-danger"
-                                    >
-                                        Excluir
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>Nenhum produto cadastrado ainda. Adicione um novo!</p>
-            )}
+            <h2 className="mb-4">Lista de Produtos Matéria Prima</h2> {/* Aumentei mb */}
+            <Link to="/produtos/add" className="btn btn-primary mb-4">Adicionar Novo Produto</Link> {/* Aumentei mb */}
+
+            <div className="card">
+                <div className="card-body">
+                    {produtos.length > 0 ? (
+                        <div className="table-responsive">
+                            <table className="table table-striped table-hover table-bordered align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>ID ou OP</th>
+                                        <th className="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {produtos.map(produto => (
+                                        <tr key={produto.id}>
+                                            <td>{produto.id}</td>
+                                            <td>{produto.nome}</td>
+                                            <td>{produto.id_ou_op}</td>
+                                            <td className="text-center">
+                                                <Link to={`/produtos/edit/${produto.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
+                                                <button
+                                                    onClick={() => handleDelete(produto.id)}
+                                                    className="btn btn-sm btn-danger"
+                                                >
+                                                    Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-muted">Nenhum produto cadastrado ainda. Adicione um novo!</p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

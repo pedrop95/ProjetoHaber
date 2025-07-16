@@ -1,0 +1,212 @@
+/* PROJETOHABER/frontend/src/custom.css */
+
+/* Variáveis de Cores (Baseadas na Logo da Brasil Química) */
+:root {
+  --primary-dark-gray: #333333; /* Cinza escuro principal, similar ao texto BRQ */
+  --brq-green: #61b32d;       /* Verde vibrante da logo */
+  --brq-blue: #00bcd4;        /* Azul ciano/turquesa vibrante da logo */
+  --light-bg: #f8f9fa;        /* Fundo claro geral */
+  --card-border: #e0e0e0;     /* Borda dos cards */
+  --text-secondary: #6c757d;  /* Cor para textos secundários/labels */
+
+  /* Cores para estados de botões/hover (manual, já que darken() não é CSS puro) */
+  --brq-green-darker: #4a8c23; /* Verde um pouco mais escuro para hover */
+  --brq-blue-darker: #009aac;  /* Azul um pouco mais escuro para hover */
+  --danger-darker: #c22934;    /* Vermelho um pouco mais escuro para hover */
+}
+
+/* Importar Fonte do Google Fonts (Montserrat) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--light-bg);
+  color: var(--primary-dark-gray);
+  line-height: 1.6; /* Melhorar legibilidade do texto */
+}
+
+/* Navbar Personalizada */
+.navbar {
+  background-color: var(--primary-dark-gray) !important; /* Força o background escuro */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
+}
+
+.navbar-brand {
+  color: #fff !important; /* Cor branca para o texto da marca */
+  font-weight: 700; /* Negrito */
+  font-size: 1.5rem; /* Tamanho maior para a marca */
+}
+
+.navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.75) !important; /* Links mais claros */
+  font-weight: 600; /* Semi-negrito */
+  transition: color 0.3s ease; /* Transição suave na cor */
+}
+
+.navbar-nav .nav-link:hover {
+  color: #fff !important; /* Branco ao passar o mouse */
+}
+
+.navbar-nav .nav-link.active {
+  color: #fff !important; /* Branco para o link ativo */
+  background-color: rgba(255, 255, 255, 0.1); /* Fundo sutil para o ativo */
+  border-radius: 5px;
+}
+
+/* Títulos */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--primary-dark-gray);
+  font-weight: 600; /* Semi-negrito para todos os títulos */
+  margin-bottom: 1.5rem; /* Espaçamento abaixo dos títulos */
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+
+/* Botões Personalizados */
+.btn-primary {
+  background-color: var(--brq-green);
+  border-color: var(--brq-green);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--brq-green-darker);
+  border-color: var(--brq-green-darker);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-info { /* Para botões de Editar */
+  background-color: var(--brq-blue);
+  border-color: var(--brq-blue);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-info:hover, .btn-info:focus {
+  background-color: var(--brq-blue-darker);
+  border-color: var(--brq-blue-darker);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-success { /* Usado para Adicionar/Salvar em alguns lugares */
+  background-color: var(--brq-green);
+  border-color: var(--brq-green);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-success:hover, .btn-success:focus {
+    background-color: var(--brq-green-darker);
+    border-color: var(--brq-green-darker);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.btn-danger:hover, .btn-danger:focus {
+    background-color: var(--danger-darker);
+    border-color: var(--danger-darker);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-secondary {
+    background-color: var(--text-secondary);
+    border-color: var(--text-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.btn-secondary:hover, .btn-secondary:focus {
+    background-color: darken(var(--text-secondary), 10%);
+    border-color: darken(var(--text-secondary), 10%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+
+/* Estilo de Cards para Listas e Formulários */
+.card {
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra mais pronunciada */
+  margin-bottom: 2rem; /* Espaçamento entre cards/seções */
+}
+
+.card-header {
+  background-color: #f0f2f5; /* Um cinza muito claro para o cabeçalho do card */
+  border-bottom: 1px solid var(--card-border);
+  padding: 1.2rem 1.5rem; /* Padding generoso */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  font-weight: 600;
+  color: var(--primary-dark-gray);
+  font-size: 1.25rem;
+}
+
+.card-header h2 {
+    margin-bottom: 0; /* Remove a margin padrão do h2 dentro do header */
+}
+
+.card-body {
+  padding: 1.5rem; /* Padding generoso no corpo do card */
+}
+
+/* Tabelas */
+.table {
+  margin-bottom: 0; /* Remove margin-bottom padrão se dentro de um card */
+}
+
+.table thead th {
+  background-color: var(--light-bg); /* Fundo para o cabeçalho da tabela */
+  border-bottom: 2px solid var(--card-border);
+  font-weight: 600;
+  color: var(--primary-dark-gray);
+  padding: 1rem;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(var(--brq-blue), 0.05); /* Um leve destaque azul ao passar o mouse */
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0,0,0,.03); /* Fundo listrado mais suave */
+}
+
+.table-bordered th, .table-bordered td {
+  border-color: var(--card-border); /* Borda da tabela com a cor do card */
+}
+
+/* Campos de formulário */
+.form-label {
+    font-weight: 600;
+    color: var(--primary-dark-gray);
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border-color: var(--card-border);
+    padding: 0.75rem 1rem;
+    border-radius: 5px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--brq-blue);
+    box-shadow: 0 0 0 0.25rem rgba(0, 188, 212, 0.25); /* Sombra de foco com cor BRQ azul */
+}
+
+/* Utilitários */
+.mt-4 { margin-top: 1.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.me-2 { margin-right: 0.5rem !important; }
+.ms-2 { margin-left: 0.5rem !important; }
+.text-center { text-align: center !important; }
+
+/* Para centralizar o conteúdo principal da página */
+.container {
+    max-width: 1200px; /* Limita a largura do conteúdo para melhor leitura */
+}

@@ -25,7 +25,7 @@ function ConfiguracaoAnaliseList() {
             axios.delete(`${API_URL}${id}/`)
                 .then(() => {
                     alert('Configuração de Análise excluída com sucesso!');
-                    fetchConfiguracoes(); // Atualiza a lista após a exclusão
+                    fetchConfiguracoes();
                 })
                 .catch(error => {
                     console.error("Erro ao excluir configuração:", error.response ? error.response.data : error);
@@ -36,48 +36,55 @@ function ConfiguracaoAnaliseList() {
 
     return (
         <div className="container mt-4">
-            <h2>Lista de Configurações de Análise</h2>
-            <Link to="/configuracoes-analise/add" className="btn btn-primary mb-3">Adicionar Nova Configuração</Link>
-            {configuracoes.length > 0 ? (
-                <table className="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Produto</th>
-                            <th>Elemento Químico</th>
-                            <th>Diluição 1 (X:Y)</th>
-                            <th>Diluição 2 (X:Y)</th>
-                            <th>Limite Min</th>
-                            <th>Limite Max</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {configuracoes.map(config => (
-                            <tr key={config.id}>
-                                <td>{config.id}</td>
-                                <td>{config.produto_mat_prima_nome} ({config.produto_mat_prima_id_ou_op})</td>
-                                <td>{config.elemento_quimico_nome} ({config.elemento_quimico_simbolo})</td>
-                                <td>{config.diluicao1_X}:{config.diluicao1_Y}</td>
-                                <td>{config.diluicao2_X ? `${config.diluicao2_X}:${config.diluicao2_Y}` : 'N/A'}</td>
-                                <td>{config.limite_min || 'N/A'}</td>
-                                <td>{config.limite_max || 'N/A'}</td>
-                                <td>
-                                    <Link to={`/configuracoes-analise/edit/${config.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
-                                    <button
-                                        onClick={() => handleDelete(config.id)}
-                                        className="btn btn-sm btn-danger"
-                                    >
-                                        Excluir
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>Nenhuma configuração de análise cadastrada ainda. Adicione uma nova!</p>
-            )}
+            <h2 className="mb-4">Lista de Configurações de Análise</h2>
+            <Link to="/configuracoes-analise/add" className="btn btn-primary mb-4">Adicionar Nova Configuração</Link>
+
+            <div className="card">
+                <div className="card-body">
+                    {configuracoes.length > 0 ? (
+                        <div className="table-responsive">
+                            <table className="table table-striped table-hover table-bordered align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Produto</th>
+                                        <th>Elemento Químico</th>
+                                        <th className="text-center">Diluição 1 (X:Y)</th>
+                                        <th className="text-center">Diluição 2 (X:Y)</th>
+                                        <th className="text-center">Limite Min</th>
+                                        <th className="text-center">Limite Max</th>
+                                        <th className="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {configuracoes.map(config => (
+                                        <tr key={config.id}>
+                                            <td>{config.id}</td>
+                                            <td>{config.produto_mat_prima_nome} ({config.produto_mat_prima_id_ou_op})</td>
+                                            <td>{config.elemento_quimico_nome} ({config.elemento_quimico_simbolo})</td>
+                                            <td className="text-center">{config.diluicao1_X}:{config.diluicao1_Y}</td>
+                                            <td className="text-center">{config.diluicao2_X ? `${config.diluicao2_X}:${config.diluicao2_Y}` : 'N/A'}</td>
+                                            <td className="text-center">{config.limite_min || 'N/A'}</td>
+                                            <td className="text-center">{config.limite_max || 'N/A'}</td>
+                                            <td className="text-center">
+                                                <Link to={`/configuracoes-analise/edit/${config.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
+                                                <button
+                                                    onClick={() => handleDelete(config.id)}
+                                                    className="btn btn-sm btn-danger"
+                                                >
+                                                    Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-muted">Nenhuma configuração de análise cadastrada ainda. Adicione uma nova!</p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

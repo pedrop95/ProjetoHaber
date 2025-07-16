@@ -12,7 +12,7 @@ function ConfiguracaoAnaliseForm() {
         diluicao1_Y: '',
         diluicao2_X: '',
         diluicao2_Y: '',
-        limite_min: '', // Assumindo que você tem limite_min e limite_max nas Configs
+        limite_min: '',
         limite_max: '',
     });
     const [produtos, setProdutos] = useState([]);
@@ -26,22 +26,18 @@ function ConfiguracaoAnaliseForm() {
     const ELEMENTOS_API_URL = 'http://localhost:8000/api/elementos/';
 
     useEffect(() => {
-        // Carregar produtos
         axios.get(PRODUTOS_API_URL)
             .then(response => setProdutos(response.data))
             .catch(error => console.error("Erro ao buscar produtos:", error));
 
-        // Carregar elementos
         axios.get(ELEMENTOS_API_URL)
             .then(response => setElementos(response.data))
             .catch(error => console.error("Erro ao buscar elementos:", error));
 
-        // Se for modo de edição, carregar configuração existente
         if (id) {
             setIsEditMode(true);
             axios.get(`${API_URL}${id}/`)
                 .then(response => {
-                    // Garante que os valores numéricos vazios sejam '' para inputs controlados
                     setConfiguracao({
                         ...response.data,
                         diluicao1_X: response.data.diluicao1_X || '',
@@ -67,7 +63,6 @@ function ConfiguracaoAnaliseForm() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Converte valores vazios de números para null se o backend espera isso
         const dataToSubmit = {
             ...configuracao,
             diluicao1_X: configuracao.diluicao1_X === '' ? null : Number(configuracao.diluicao1_X),
@@ -103,137 +98,141 @@ function ConfiguracaoAnaliseForm() {
 
     return (
         <div className="container mt-4">
-            <h2>{isEditMode ? 'Editar Configuração de Análise' : 'Adicionar Nova Configuração de Análise'}</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label htmlFor="produto_mat_prima" className="form-label">Produto Matéria Prima</label>
-                    <select
-                        className="form-control"
-                        id="produto_mat_prima"
-                        name="produto_mat_prima"
-                        value={configuracao.produto_mat_prima}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Selecione um Produto</option>
-                        {produtos.map(produto => (
-                            <option key={produto.id} value={produto.id}>{produto.nome} ({produto.id_ou_op})</option>
-                        ))}
-                    </select>
+            <div className="card">
+                <div className="card-header">
+                    <h2>{isEditMode ? 'Editar Configuração de Análise' : 'Adicionar Nova Configuração de Análise'}</h2>
                 </div>
+                <div className="card-body">
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                            <label htmlFor="produto_mat_prima" className="form-label">Produto Matéria Prima</label>
+                            <select
+                                className="form-control"
+                                id="produto_mat_prima"
+                                name="produto_mat_prima"
+                                value={configuracao.produto_mat_prima}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Selecione um Produto</option>
+                                {produtos.map(produto => (
+                                    <option key={produto.id} value={produto.id}>{produto.nome} ({produto.id_ou_op})</option>
+                                ))}
+                            </select>
+                        </div>
 
-                <div className="mb-3">
-                    <label htmlFor="elemento_quimico" className="form-label">Elemento Químico</label>
-                    <select
-                        className="form-control"
-                        id="elemento_quimico"
-                        name="elemento_quimico"
-                        value={configuracao.elemento_quimico}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Selecione um Elemento</option>
-                        {elementos.map(elemento => (
-                            <option key={elemento.id} value={elemento.id}>{elemento.nome} ({elemento.simbolo})</option>
-                        ))}
-                    </select>
+                        <div className="mb-3">
+                            <label htmlFor="elemento_quimico" className="form-label">Elemento Químico</label>
+                            <select
+                                className="form-control"
+                                id="elemento_quimico"
+                                name="elemento_quimico"
+                                value={configuracao.elemento_quimico}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="">Selecione um Elemento</option>
+                                {elementos.map(elemento => (
+                                    <option key={elemento.id} value={elemento.id}>{elemento.nome} ({elemento.simbolo})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <h4 className="mt-4 mb-3">Diluição 1</h4>
+                        <div className="row mb-3">
+                            <div className="col-md-6">
+                                <label htmlFor="diluicao1_X" className="form-label">Diluição 1 (X - Volume Inicial)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    className="form-control"
+                                    id="diluicao1_X"
+                                    name="diluicao1_X"
+                                    value={configuracao.diluicao1_X}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <label htmlFor="diluicao1_Y" className="form-label">Diluição 1 (Y - Volume Final)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    className="form-control"
+                                    id="diluicao1_Y"
+                                    name="diluicao1_Y"
+                                    value={configuracao.diluicao1_Y}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <h4 className="mt-4 mb-3">Diluição 2 (Opcional)</h4>
+                        <div className="row mb-3">
+                            <div className="col-md-6">
+                                <label htmlFor="diluicao2_X" className="form-label">Diluição 2 (X - Volume Inicial)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    className="form-control"
+                                    id="diluicao2_X"
+                                    name="diluicao2_X"
+                                    value={configuracao.diluicao2_X}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <label htmlFor="diluicao2_Y" className="form-label">Diluição 2 (Y - Volume Final)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    className="form-control"
+                                    id="diluicao2_Y"
+                                    name="diluicao2_Y"
+                                    value={configuracao.diluicao2_Y}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <h4 className="mt-4 mb-3">Limites de Tolerância (Opcional)</h4>
+                        <div className="row mb-4"> {/* Aumentei mb aqui para espaçar dos botões */}
+                            <div className="col-md-6">
+                                <label htmlFor="limite_min" className="form-label">Limite Mínimo</label>
+                                <input
+                                    type="number"
+                                    step="0.0001"
+                                    className="form-control"
+                                    id="limite_min"
+                                    name="limite_min"
+                                    value={configuracao.limite_min}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div className="col-md-6">
+                                <label htmlFor="limite_max" className="form-label">Limite Máximo</label>
+                                <input
+                                    type="number"
+                                    step="0.0001"
+                                    className="form-control"
+                                    id="limite_max"
+                                    name="limite_max"
+                                    value={configuracao.limite_max}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <button type="submit" className="btn btn-primary mt-3">
+                            {isEditMode ? 'Atualizar Configuração' : 'Adicionar Configuração'}
+                        </button>
+                        <button type="button" className="btn btn-secondary mt-3 ms-2" onClick={() => navigate('/configuracoes-analise')}>
+                            Cancelar
+                        </button>
+                    </form>
                 </div>
-
-                {/* Campos de Diluição */}
-                <h4 className="mt-4">Diluição 1</h4>
-                <div className="row mb-3">
-                    <div className="col-md-6">
-                        <label htmlFor="diluicao1_X" className="form-label">Diluição 1 (X - Volume Inicial)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            className="form-control"
-                            id="diluicao1_X"
-                            name="diluicao1_X"
-                            value={configuracao.diluicao1_X}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="diluicao1_Y" className="form-label">Diluição 1 (Y - Volume Final)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            className="form-control"
-                            id="diluicao1_Y"
-                            name="diluicao1_Y"
-                            value={configuracao.diluicao1_Y}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                </div>
-
-                <h4 className="mt-4">Diluição 2 (Opcional)</h4>
-                <div className="row mb-3">
-                    <div className="col-md-6">
-                        <label htmlFor="diluicao2_X" className="form-label">Diluição 2 (X - Volume Inicial)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            className="form-control"
-                            id="diluicao2_X"
-                            name="diluicao2_X"
-                            value={configuracao.diluicao2_X}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="diluicao2_Y" className="form-label">Diluição 2 (Y - Volume Final)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            className="form-control"
-                            id="diluicao2_Y"
-                            name="diluicao2_Y"
-                            value={configuracao.diluicao2_Y}
-                            onChange={handleChange}
-                        />
-                    </div>
-                </div>
-
-                {/* Limites (Assumindo que você quer isso aqui) */}
-                <h4 className="mt-4">Limites de Tolerância (Opcional)</h4>
-                <div className="row mb-3">
-                    <div className="col-md-6">
-                        <label htmlFor="limite_min" className="form-label">Limite Mínimo</label>
-                        <input
-                            type="number"
-                            step="0.0001"
-                            className="form-control"
-                            id="limite_min"
-                            name="limite_min"
-                            value={configuracao.limite_min}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="col-md-6">
-                        <label htmlFor="limite_max" className="form-label">Limite Máximo</label>
-                        <input
-                            type="number"
-                            step="0.0001"
-                            className="form-control"
-                            id="limite_max"
-                            name="limite_max"
-                            value={configuracao.limite_max}
-                            onChange={handleChange}
-                        />
-                    </div>
-                </div>
-
-                <button type="submit" className="btn btn-primary mt-3">
-                    {isEditMode ? 'Atualizar Configuração' : 'Adicionar Configuração'}
-                </button>
-                <button type="button" className="btn btn-secondary mt-3 ms-2" onClick={() => navigate('/configuracoes-analise')}>
-                    Cancelar
-                </button>
-            </form>
+            </div>
         </div>
     );
 }

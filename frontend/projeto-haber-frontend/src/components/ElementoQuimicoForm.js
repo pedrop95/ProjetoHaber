@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 function ElementoQuimicoForm() {
     const [elemento, setElemento] = useState({
         nome: '',
-        simbolo: '', // Assumindo que você tem um campo para o símbolo do elemento
+        simbolo: '',
     });
     const [isEditMode, setIsEditMode] = useState(false);
     const { id } = useParams();
@@ -40,7 +40,7 @@ function ElementoQuimicoForm() {
             axios.put(`${API_URL}${id}/`, elemento)
                 .then(() => {
                     alert('Elemento Químico atualizado com sucesso!');
-                    navigate('/elementos'); // Redireciona para a lista de elementos
+                    navigate('/elementos');
                 })
                 .catch(error => {
                     console.error("Erro ao atualizar elemento químico:", error.response ? error.response.data : error);
@@ -50,7 +50,7 @@ function ElementoQuimicoForm() {
             axios.post(API_URL, elemento)
                 .then(() => {
                     alert('Elemento Químico adicionado com sucesso!');
-                    navigate('/elementos'); // Redireciona para a lista de elementos
+                    navigate('/elementos');
                 })
                 .catch(error => {
                     console.error("Erro ao adicionar elemento químico:", error.response ? error.response.data : error);
@@ -61,39 +61,45 @@ function ElementoQuimicoForm() {
 
     return (
         <div className="container mt-4">
-            <h2>{isEditMode ? 'Editar Elemento Químico' : 'Adicionar Novo Elemento Químico'}</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label htmlFor="nome" className="form-label">Nome do Elemento</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="nome"
-                        name="nome"
-                        value={elemento.nome}
-                        onChange={handleChange}
-                        required
-                    />
+            <div className="card">
+                <div className="card-header">
+                    <h2>{isEditMode ? 'Editar Elemento Químico' : 'Adicionar Novo Elemento Químico'}</h2>
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="simbolo" className="form-label">Símbolo</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="simbolo"
-                        name="simbolo"
-                        value={elemento.simbolo}
-                        onChange={handleChange}
-                        required
-                    />
+                <div className="card-body">
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                            <label htmlFor="nome" className="form-label">Nome do Elemento</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="nome"
+                                name="nome"
+                                value={elemento.nome}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="mb-3">
+                            <label htmlFor="simbolo" className="form-label">Símbolo</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="simbolo"
+                                name="simbolo"
+                                value={elemento.simbolo}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary mt-3">
+                            {isEditMode ? 'Atualizar Elemento' : 'Adicionar Elemento'}
+                        </button>
+                        <button type="button" className="btn btn-secondary mt-3 ms-2" onClick={() => navigate('/elementos')}>
+                            Cancelar
+                        </button>
+                    </form>
                 </div>
-                <button type="submit" className="btn btn-primary mt-3">
-                    {isEditMode ? 'Atualizar Elemento' : 'Adicionar Elemento'}
-                </button>
-                <button type="button" className="btn btn-secondary mt-3 ms-2" onClick={() => navigate('/elementos')}>
-                    Cancelar
-                </button>
-            </form>
+            </div>
         </div>
     );
 }
