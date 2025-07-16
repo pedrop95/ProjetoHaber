@@ -3,7 +3,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import ProductList from './pages/ProductList';
-import ProductForm from './pages/ProductForm'; // << Importe o novo componente ProductForm
+import ProductForm from './pages/ProductForm';
 import './App.css';
 
 function Home() {
@@ -20,7 +20,6 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          {/* Navegação */}
           <nav>
             <ul>
               <li>
@@ -30,21 +29,20 @@ function App() {
                 <Link to="/produtos">Produtos</Link>
               </li>
               <li>
-                <Link to="/produtos/novo">Adicionar Produto</Link> {/* << Novo link */}
+                <Link to="/produtos/novo">Adicionar Produto</Link>
               </li>
-              {/* Você adicionará links para outros módulos aqui futuramente */}
             </ul>
           </nav>
           <hr />
         </header>
 
         <main>
-          {/* Definição das rotas */}
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/produtos" element={<ProductList />} />
-            <Route path="/produtos/novo" element={<ProductForm />} /> {/* << Nova rota */}
-            {/* Adicione outras rotas aqui */}
+            <Route path="/produtos/novo" element={<ProductForm />} />
+            {/* << NOVA ROTA PARA EDIÇÃO >> */}
+            <Route path="/produtos/:id/editar" element={<ProductForm />} />
           </Routes>
         </main>
       </div>
