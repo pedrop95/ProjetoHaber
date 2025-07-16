@@ -3,55 +3,28 @@
 from django.contrib import admin
 from .models import RegistroAnalise, DetalheAnalise
 
-# Inline para DetalheAnalise (para aparecer dentro do RegistroAnalise)
 class DetalheAnaliseInline(admin.TabularInline):
     model = DetalheAnalise
-    extra = 1 # Quantidade de formulários vazios para adicionar novos detalhes
-    fields = (
-        'elemento_quimico', 
-        'resultado', 
-        'massa_pesada',      # NOVO CAMPO
-        'absorbancia_medida' # NOVO CAMPO
-    )
-
+    extra = 1
+    fields = ['elemento_quimico', 'resultado', 'massa_pesada', 'absorbancia_medida']
 
 @admin.register(RegistroAnalise)
 class RegistroAnaliseAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
-        'produto_mat_prima', 
-        'data_analise', 
-        'data_producao',    # NOVO CAMPO
-        'data_validade',    # NOVO CAMPO
-        'lote', 
-        'nota_fiscal', 
-        'fornecedor'        # NOVO CAMPO
+        'id', 'produto_mat_prima', 'data_analise', 'lote', 'status', # Adicione 'status' aqui
+        'data_producao', 'data_validade', 'fornecedor', 'nota_fiscal'
     )
-    list_filter = ('data_analise', 'produto_mat_prima__nome', 'fornecedor') # Exemplo de filtro, ajuste se quiser
-    search_fields = ('produto_mat_prima__nome', 'lote', 'nota_fiscal', 'fornecedor')
-    inlines = [DetalheAnaliseInline] # Adiciona o inline aqui
+    search_fields = ('lote', 'produto_mat_prima__nome', 'fornecedor', 'nota_fiscal')
+    list_filter = ('data_analise', 'produto_mat_prima', 'status') # Adicione 'status' aqui
+    date_hierarchy = 'data_analise'
 
     fieldsets = (
         (None, {
-            'fields': (
-                ('produto_mat_prima', 'data_analise'), # Campos na mesma linha
-                ('data_producao', 'data_validade'), # NOVOS CAMPOS na mesma linha
-                ('lote', 'nota_fiscal'), # Campos na mesma linha
-                'fornecedor', # NOVO CAMPO
-            )
+            'fields': ('produto_mat_prima', 'data_analise', 'status') # Adicione 'status' aqui
+        }),
+        ('Informações de Lote e Fornecedor', {
+            'fields': ('lote', 'nota_fiscal', 'fornecedor', 'data_producao', 'data_validade'),
+            'classes': ('collapse',) # Opcional: faz esta seção ser colapsável
         }),
     )
-
-
-@admin.register(DetalheAnalise)
-class DetalheAnaliseAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 
-        'registro_analise', 
-        'elemento_quimico', 
-        'resultado', 
-        'massa_pesada',        # NOVO CAMPO
-        'absorbancia_medida'   # NOVO CAMPO
-    )
-    list_filter = ('registro_analise__produto_mat_prima', 'elemento_quimico')
-    search_fields = ('elemento_quimico__nome', 'registro_analise__lote')
+    inlines = [DetalheAnaliseInline]

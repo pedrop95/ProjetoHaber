@@ -8,16 +8,17 @@ function RegistroAnaliseForm() {
     const [registro, setRegistro] = useState({
         produto_mat_prima: '',
         data_analise: '',
-        data_producao: '', // NOVO CAMPO
-        data_validade: '', // NOVO CAMPO
+        data_producao: '',
+        data_validade: '',
         lote: '',
         nota_fiscal: '',
-        fornecedor: '',    // NOVO CAMPO
+        fornecedor: '',
+        status: 'EM_ANDAMENTO', // <-- NOVO: Valor padrão para o status
         detalhes: []
     });
     const [produtos, setProdutos] = useState([]);
-    const [elementos, setElementos] = useState([]); // Ainda precisamos da lista de elementos para o dropdown
-    const [configuracoesAnalise, setConfiguracoesAnalise] = useState([]); // Para armazenar as configurações do produto selecionado
+    const [elementos, setElementos] = useState([]);
+    const [configuracoesAnalise, setConfiguracoesAnalise] = useState([]);
     const [isEditMode, setIsEditMode] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
@@ -25,7 +26,17 @@ function RegistroAnaliseForm() {
     const API_URL = 'http://localhost:8000/api/registros-analise/';
     const PRODUTOS_API_URL = 'http://localhost:8000/api/produtos/';
     const ELEMENTOS_API_URL = 'http://localhost:8000/api/elementos/';
-    const CONFIGURACOES_API_URL = 'http://localhost:8000/api/configuracoes-analise/'; // Nova URL para buscar configurações
+    const CONFIGURACOES_API_URL = 'http://localhost:8000/api/configuracoes-analise/';
+
+    // State para guardar o produto_mat_prima original em modo de edição
+    const [originalProdutoMatPrimaId, setOriginalProdutoMatPrimaId] = useState(null);
+
+    // Opções para o dropdown de Status
+    const statusOptions = [
+        { value: 'EM_ANDAMENTO', label: 'Em Andamento' },
+        { value: 'CONCLUIDO', label: 'Concluído' },
+        { value: 'CANCELADO', label: 'Cancelado' },
+    ];
 
     useEffect(() => {
         // Carrega produtos e elementos ao montar o componente
@@ -42,22 +53,20 @@ function RegistroAnaliseForm() {
             setIsEditMode(true);
             axios.get(`${API_URL}${id}/`)
                 .then(response => {
-                    // Formata as datas para o formato 'YYYY-MM-DD' esperado pelos inputs type="date"
                     const formattedData = {
                         ...response.data,
                         data_analise: response.data.data_analise,
-                        data_producao: response.data.data_producao || '', // Garante string vazia se null
-                        data_validade: response.data.data_validade || '', // Garante string vazia se null
+                        data_producao: response.data.data_producao || '',
+                        data_validade: response.data.data_validade || '',
+                        status: response.data.status || 'EM_ANDAMENTO', // <-- NOVO: Define o status ao carregar
                     };
                     setRegistro(formattedData);
-                    // Quando o registro é carregado, também busca as configurações de análise para o produto
-                    if (response.data.produto_mat_prima) {
-                        fetchConfiguracoesAnalise(response.data.produto_mat_prima);
-                    }
+                    setOriginalProdutoMatPrimaId(formattedData.produto_mat_prima); // Guarda o ID original
+
+                    // A chamada para fetchConfiguracoesAnalise será feita pelo useEffect que observa registro.produto_mat_prima
                 })
                 .catch(error => console.error("Erro ao buscar registro:", error));
         } else {
-            // Define a data_analise padrão para hoje em modo de criação
             setRegistro(prevRegistro => ({
                 ...prevRegistro,
                 data_analise: new Date().toISOString().split('T')[0]
@@ -65,69 +74,61 @@ function RegistroAnaliseForm() {
         }
     }, [id]);
 
-    // Função para buscar as configurações de análise de um produto específico
-    const fetchConfiguracoesAnalise = (produtoId) => {
+    const fetchConfiguracoesAnalise = async (produtoId, currentDetalhes = []) => {
         if (!produtoId) {
             setConfiguracoesAnalise([]);
-            setRegistro(prevRegistro => ({ ...prevRegistro, detalhes: [] })); // Limpa detalhes se nenhum produto
-            return;
+            return [];
         }
-        axios.get(`${CONFIGURACOES_API_URL}?produto_mat_prima=${produtoId}`)
-            .then(response => {
-                setConfiguracoesAnalise(response.data);
-                // Gera os detalhes iniciais com base nas configurações
-                // Se estiver em modo de edição, mescla com os detalhes existentes
-                if (isEditMode && registro.detalhes.length > 0) {
-                    const newDetalhes = response.data.map(config => {
-                        const existingDetail = registro.detalhes.find(d => d.elemento_quimico === config.elemento_quimico);
-                        return existingDetail || {
-                            id: null, // Para novos detalhes na edição
-                            elemento_quimico: config.elemento_quimico,
-                            elemento_quimico_nome: config.elemento_quimico_nome,
-                            resultado: '',
-                            massa_pesada: '', // Novo campo
-                            absorbancia_medida: '', // Novo campo
-                        };
-                    });
-                     // Garante que detalhes carregados do backend (se tiverem IDs e não forem de uma configuração)
-                     // sejam mantidos se o produto não mudou
-                    const finalDetalhes = [...new Set([...newDetalhes, ...registro.detalhes])].filter(d => 
-                        response.data.some(config => config.elemento_quimico === d.elemento_quimico) || d.id
-                    );
+        try {
+            const response = await axios.get(`${CONFIGURACOES_API_URL}?produto_mat_prima=${produtoId}`);
+            setConfiguracoesAnalise(response.data);
 
+            const newGeneratedDetalhes = response.data.map(config => {
+                const existingDetail = currentDetalhes.find(
+                    d => d.elemento_quimico === config.elemento_quimico
+                );
 
-                    setRegistro(prevRegistro => ({
-                        ...prevRegistro,
-                        detalhes: finalDetalhes.sort((a,b) => a.elemento_quimico_nome.localeCompare(b.elemento_quimico_nome))
-                    }));
+                return {
+                    id: existingDetail ? existingDetail.id : null,
+                    elemento_quimico: config.elemento_quimico,
+                    elemento_quimico_nome: config.elemento_quimico_nome,
+                    resultado: existingDetail ? existingDetail.resultado : '',
+                    massa_pesada: existingDetail ? existingDetail.massa_pesada : '',
+                    absorbancia_medida: existingDetail ? existingDetail.absorbancia_medida : '',
+                };
+            }).sort((a,b) => a.elemento_quimico_nome.localeCompare(b.elemento_quimico_nome));
 
-                } else {
-                    const generatedDetalhes = response.data.map(config => ({
-                        id: null, // Novos detalhes não têm ID ainda
-                        elemento_quimico: config.elemento_quimico,
-                        elemento_quimico_nome: config.elemento_quimico_nome, // Para exibição
-                        resultado: '',
-                        massa_pesada: '', // Novo campo
-                        absorbancia_medida: '', // Novo campo
-                    }));
-                    setRegistro(prevRegistro => ({
-                        ...prevRegistro,
-                        detalhes: generatedDetalhes.sort((a,b) => a.elemento_quimico_nome.localeCompare(b.elemento_quimico_nome))
-                    }));
-                }
-            })
-            .catch(error => console.error("Erro ao buscar configurações de análise:", error));
+            return newGeneratedDetalhes;
+        } catch (error) {
+            console.error("Erro ao buscar configurações de análise:", error);
+            return [];
+        }
     };
 
-    // Executa fetchConfiguracoesAnalise quando o produto_mat_prima muda
     useEffect(() => {
-        // Apenas busca configurações se não estiver em modo de edição e já houver detalhes carregados (evita loop)
-        // Ou se estiver em edição e o produto mudar (limpa os detalhes existentes para recarregar do produto)
-        if (!isEditMode || (isEditMode && registro.produto_mat_prima !== (registro.id ? registro.produto_mat_prima : ''))) {
-            fetchConfiguracoesAnalise(registro.produto_mat_prima);
-        }
-    }, [registro.produto_mat_prima, isEditMode]);
+        const updateDetalhes = async () => {
+            if (registro.produto_mat_prima) {
+                const updatedDetalhes = await fetchConfiguracoesAnalise(
+                    registro.produto_mat_prima,
+                    isEditMode ? registro.detalhes : []
+                );
+                setRegistro(prevRegistro => ({
+                    ...prevRegistro,
+                    detalhes: updatedDetalhes
+                }));
+            } else {
+                setRegistro(prevRegistro => ({ ...prevRegistro, detalhes: [] }));
+                setConfiguracoesAnalise([]);
+            }
+        };
 
+        if (registro.produto_mat_prima && (registro.produto_mat_prima !== originalProdutoMatPrimaId || !isEditMode)) {
+            updateDetalhes();
+        } else if (!registro.produto_mat_prima) {
+            setRegistro(prevRegistro => ({ ...prevRegistro, detalhes: [] }));
+            setConfiguracoesAnalise([]);
+        }
+    }, [registro.produto_mat_prima, id, originalProdutoMatPrimaId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -147,28 +148,18 @@ function RegistroAnaliseForm() {
         }));
     };
 
-    // Remove o botão 'Adicionar Detalhe' e 'Remover Detalhe' para forçar a criação via ConfiguraçãoAnalise
-    // Se precisar de flexibilidade para adicionar mais detalhes que não estão na configuração
-    // podemos reintroduzir a lógica de 'handleAddDetalhe' e 'handleRemoveDetalhe',
-    // mas a requisição é que os detalhes sejam pré-definidos pelo produto.
-
-    // A função 'handleSubmit' precisará garantir que os IDs de detalhes existentes sejam mantidos
-    // e os novos detalhes sejam enviados sem ID.
-
     const handleSubmit = (e) => {
         e.preventDefault();
         const dataToSubmit = {
             ...registro,
-            // Ajusta o formato da data para garantir que o backend aceite
-            data_analise: registro.data_analise,
-            data_producao: registro.data_producao || null, // Garante null se vazio
-            data_validade: registro.data_validade || null, // Garante null se vazio
+            data_producao: registro.data_producao || null,
+            data_validade: registro.data_validade || null,
             detalhes: registro.detalhes.map(detalhe => ({
-                id: detalhe.id || undefined, // Mantém ID para PUT, undefined para POST
+                id: detalhe.id || undefined,
                 elemento_quimico: detalhe.elemento_quimico,
                 resultado: detalhe.resultado,
-                massa_pesada: detalhe.massa_pesada, // Novo campo
-                absorbancia_medida: detalhe.absorbancia_medida, // Novo campo
+                massa_pesada: detalhe.massa_pesada,
+                absorbancia_medida: detalhe.absorbancia_medida,
             }))
         };
 
@@ -230,7 +221,24 @@ function RegistroAnaliseForm() {
                     />
                 </div>
 
-                {/* NOVOS CAMPOS DO REGISTRO DE ANÁLISE */}
+                {/* NOVO CAMPO DE STATUS */}
+                <div className="mb-3">
+                    <label htmlFor="status" className="form-label">Status da Análise</label>
+                    <select
+                        className="form-control"
+                        id="status"
+                        name="status"
+                        value={registro.status}
+                        onChange={handleChange}
+                        required
+                    >
+                        {statusOptions.map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* OUTROS NOVOS CAMPOS DO REGISTRO DE ANÁLISE */}
                 <div className="mb-3">
                     <label htmlFor="data_producao" className="form-label">Data de Produção</label>
                     <input
@@ -292,7 +300,6 @@ function RegistroAnaliseForm() {
                 {registro.produto_mat_prima ? (
                     registro.detalhes.length > 0 ? (
                         registro.detalhes.map((detalhe, index) => {
-                            // Encontrar a configuração de análise correspondente para exibir as diluições
                             const config = configuracoesAnalise.find(
                                 cfg => cfg.elemento_quimico === detalhe.elemento_quimico
                             );
@@ -302,14 +309,12 @@ function RegistroAnaliseForm() {
                                     <div className="row g-3 align-items-end">
                                         <div className="col-md-4">
                                             <label className="form-label">Elemento Químico</label>
-                                            {/* Elemento químico vindo da configuração, read-only */}
                                             <input
                                                 type="text"
                                                 className="form-control"
                                                 value={detalhe.elemento_quimico_nome || ''}
                                                 readOnly
                                             />
-                                            {/* Campo oculto para enviar o ID do elemento */}
                                             <input
                                                 type="hidden"
                                                 name="elemento_quimico"
@@ -321,9 +326,9 @@ function RegistroAnaliseForm() {
                                             <input
                                                 type="text"
                                                 className="form-control"
-                                                value={config ? `1:${config.diluicao1_X} / 1:${config.diluicao2_X}` : 'N/A'}
+                                                value={config ? `1:${config.diluicao1_X} / 1:${config.diluicao2_X || 'N/A'}` : 'N/A'}
                                                 readOnly
-                                                title={config ? `Diluição 1: 1:${config.diluicao1_X} (Fator: ${config.diluicao1_Y}) / Diluição 2: 1:${config.diluicao2_X} (Fator: ${config.diluicao2_Y})` : ''}
+                                                title={config ? `Diluição 1: 1:${config.diluicao1_X} (Fator: ${config.diluicao1_Y}) / Diluição 2: 1:${config.diluicao2_X || 'N/A'} (Fator: ${config.diluicao2_Y || 'N/A'})` : ''}
                                             />
                                         </div>
                                         <div className="col-md-2">
