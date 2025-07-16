@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import ProductList from './pages/ProductList'; // Importe o novo componente
-import './App.css'; // Mantenha os estilos globais
+import ProductList from './pages/ProductList';
+import ProductForm from './pages/ProductForm'; // << Importe o novo componente ProductForm
+import './App.css';
 
 function Home() {
   return (
@@ -28,10 +29,13 @@ function App() {
               <li>
                 <Link to="/produtos">Produtos</Link>
               </li>
+              <li>
+                <Link to="/produtos/novo">Adicionar Produto</Link> {/* << Novo link */}
+              </li>
               {/* Você adicionará links para outros módulos aqui futuramente */}
             </ul>
           </nav>
-          <hr /> {/* Uma linha para separar a navegação do conteúdo */}
+          <hr />
         </header>
 
         <main>
@@ -39,6 +43,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/produtos" element={<ProductList />} />
+            <Route path="/produtos/novo" element={<ProductForm />} /> {/* << Nova rota */}
             {/* Adicione outras rotas aqui */}
           </Routes>
         </main>
