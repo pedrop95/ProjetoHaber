@@ -21,7 +21,7 @@ function ConfiguracaoAnaliseList() {
     };
 
     const handleDelete = (id) => {
-        if (window.confirm('Tem certeza que deseja excluir esta configuração de análise?')) {
+        if (window.confirm('Tem certeza que deseja excluir esta configuração de análise? Isso removerá todos os detalhes de elementos associados.')) {
             axios.delete(`${API_URL}${id}/`)
                 .then(() => {
                     alert('Configuração de Análise excluída com sucesso!');
@@ -48,11 +48,7 @@ function ConfiguracaoAnaliseList() {
                                     <tr>
                                         <th>ID</th>
                                         <th>Produto</th>
-                                        <th>Elemento Químico</th>
-                                        <th className="text-center">Diluição 1 (X:Y)</th>
-                                        <th className="text-center">Diluição 2 (X:Y)</th>
-                                        <th className="text-center">Limite Min</th>
-                                        <th className="text-center">Limite Max</th>
+                                        <th>Elementos (Diluições/Limites)</th> {/* Coluna para múltiplos elementos */}
                                         <th className="text-center">Ações</th>
                                     </tr>
                                 </thead>
@@ -61,11 +57,29 @@ function ConfiguracaoAnaliseList() {
                                         <tr key={config.id}>
                                             <td>{config.id}</td>
                                             <td>{config.produto_mat_prima_nome} ({config.produto_mat_prima_id_ou_op})</td>
-                                            <td>{config.elemento_quimico_nome} ({config.elemento_quimico_simbolo})</td>
-                                            <td className="text-center">{config.diluicao1_X}:{config.diluicao1_Y}</td>
-                                            <td className="text-center">{config.diluicao2_X ? `${config.diluicao2_X}:${config.diluicao2_Y}` : 'N/A'}</td>
-                                            <td className="text-center">{config.limite_min || 'N/A'}</td>
-                                            <td className="text-center">{config.limite_max || 'N/A'}</td>
+                                            <td>
+                                                {config.detalhes_elementos && config.detalhes_elementos.length > 0 ? (
+                                                    <ul>
+                                                        {config.detalhes_elementos.map(detalhe => (
+                                                            <li key={detalhe.id || detalhe.elemento_quimico}> {/* Usar detalhe.id se disponível, senão elemento_quimico (para novos) */}
+                                                                <strong>{detalhe.elemento_quimico_nome} ({detalhe.elemento_quimico_simbolo})</strong>:
+                                                                <br />
+                                                                Diluição 1: {detalhe.diluicao1_X}mL:{detalhe.diluicao1_Y}mL
+                                                                {detalhe.diluicao2_X && detalhe.diluicao2_Y && (
+                                                                    <>, Diluição 2: {detalhe.diluicao2_X}mL:{detalhe.diluicao2_Y}mL</>
+                                                                )}
+                                                                {(detalhe.limite_min || detalhe.limite_max) && (
+                                                                    <>
+                                                                        <br/> Limites: {detalhe.limite_min || 'N/A'} - {detalhe.limite_max || 'N/A'}
+                                                                    </>
+                                                                )}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <span>Nenhum elemento configurado.</span>
+                                                )}
+                                            </td>
                                             <td className="text-center">
                                                 <Link to={`/configuracoes-analise/edit/${config.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
                                                 <button

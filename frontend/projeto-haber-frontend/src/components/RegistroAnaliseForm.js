@@ -14,14 +14,16 @@ function RegistroAnaliseForm() {
     };
     const [registro, setRegistro] = useState(initialRegistroState);
     const [produtos, setProdutos] = useState([]);
-    const [configuracoesAnalise, setConfiguracoesAnalise] = useState([]);
+    // Agora configuracoesElementosDisponiveis conterá os objetos ConfiguracaoElementoDetalhe
+    const [configuracoesElementosDisponiveis, setConfiguracoesElementosDisponiveis] = useState([]);
     const [isEditMode, setIsEditMode] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
 
     const API_URL = 'http://localhost:8000/api/registros-analise/';
     const PRODUTOS_API_URL = 'http://localhost:8000/api/produtos/';
-    const CONFIGS_API_URL = 'http://localhost:8000/api/configuracoes-analise/';
+    // Agora vamos buscar os detalhes diretamente por produto, não a configuração base
+    const CONFIGS_ELEMENTO_DETALHE_API_URL = 'http://localhost:8000/api/configuracoes-elemento-detalhe/';
 
     // Opções de status
     const STATUS_OPTIONS = [
@@ -30,17 +32,18 @@ function RegistroAnaliseForm() {
         { value: 'CANCELADO', label: 'Cancelado' },
     ];
 
-    // Função para buscar configurações de análise para um produto específico
-    const fetchConfiguracoesPorProduto = useCallback((produtoId) => {
+    // Função para buscar configurações de elementos para um produto específico
+    const fetchConfiguracoesElementosPorProduto = useCallback((produtoId) => {
         if (!produtoId) {
-            setConfiguracoesAnalise([]);
+            setConfiguracoesElementosDisponiveis([]);
             return;
         }
-        axios.get(`${CONFIGS_API_URL}?produto_mat_prima=${produtoId}`)
+        // Filtra por produto_mat_prima que está na ConfiguracaoAnalise que contém o detalhe
+        axios.get(`${CONFIGS_ELEMENTO_DETALHE_API_URL}?configuracao_analise__produto_mat_prima=${produtoId}`)
             .then(response => {
-                setConfiguracoesAnalise(response.data);
+                setConfiguracoesElementosDisponiveis(response.data);
             })
-            .catch(error => console.error("Erro ao buscar configurações por produto:", error));
+            .catch(error => console.error("Erro ao buscar configurações de elementos por produto:", error));
     }, []);
 
     useEffect(() => {
@@ -57,18 +60,17 @@ function RegistroAnaliseForm() {
                     const data = response.data;
                     setRegistro({
                         ...data,
-                        // Garante que a data esteja no formato YYYY-MM-DD
                         data_analise: data.data_analise ? new Date(data.data_analise).toISOString().split('T')[0] : '',
                         detalhes: data.detalhes || [],
                     });
                     // Busca configurações para o produto do registro carregado
                     if (data.produto_mat_prima) {
-                        fetchConfiguracoesPorProduto(data.produto_mat_prima);
+                        fetchConfiguracoesElementosPorProduto(data.produto_mat_prima);
                     }
                 })
                 .catch(error => console.error("Erro ao buscar registro de análise:", error));
         }
-    }, [id, fetchConfiguracoesPorProduto]); // Inclui fetchConfiguracoesPorProduto nas dependências
+    }, [id, fetchConfiguracoesElementosPorProduto]);
 
     const handleRegistroChange = (e) => {
         const { name, value } = e.target;
@@ -78,7 +80,7 @@ function RegistroAnaliseForm() {
         }));
 
         if (name === "produto_mat_prima") {
-            fetchConfiguracoesPorProduto(value);
+            fetchConfiguracoesElementosPorProduto(value);
             // Limpa os detalhes se o produto for alterado
             setRegistro(prev => ({ ...prev, detalhes: [] }));
         }
@@ -89,7 +91,7 @@ function RegistroAnaliseForm() {
             ...prevRegistro,
             detalhes: [
                 ...prevRegistro.detalhes,
-                { configuracao_analise: '', massa_pesada: '', absorbancia_medida: '', resultado: null }
+                { configuracao_elemento_detalhe: '', massa_pesada: '', absorbancia_medida: '', resultado: null }
             ]
         }));
     };
@@ -99,15 +101,15 @@ function RegistroAnaliseForm() {
         const newDetalhes = [...registro.detalhes];
         newDetalhes[index][name] = value;
 
-        // Se mudou a configuração, tenta pré-preencher massas/absorbancias baseadas na config
-        if (name === "configuracao_analise") {
-            const configSelecionada = configuracoesAnalise.find(
+        // Se mudou a configuração do elemento, pode-se usar para info
+        if (name === "configuracao_elemento_detalhe") {
+            const detalheConfigSelecionada = configuracoesElementosDisponiveis.find(
                 config => config.id.toString() === value
             );
-            if (configSelecionada) {
+            if (detalheConfigSelecionada) {
                 // Aqui você pode definir valores padrão se houver, ou deixar em branco
-                // Por exemplo, newDetalhes[index].massa_pesada = configSelecionada.massa_padrao || '';
-                // newDetalhes[index].absorbancia_medida = configSelecionada.absorbancia_padrao || '';
+                // newDetalhes[index].massa_pesada = detalheConfigSelecionada.massa_padrao || '';
+                // newDetalhes[index].absorbancia_medida = detalheConfigSelecionada.absorbancia_padrao || '';
             }
         }
 
@@ -128,20 +130,28 @@ function RegistroAnaliseForm() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        // Validar se há pelo menos um detalhe de análise
+        if (registro.detalhes.length === 0) {
+            alert('Por favor, adicione pelo menos um detalhe de análise ao registro.');
+            return;
+        }
+
         // Limpeza dos dados: converter strings vazias para null para campos numéricos
         const cleanedDetalhes = registro.detalhes.map(detalhe => ({
             ...detalhe,
+            ...(detalhe.id && { id: detalhe.id }), // Inclui ID apenas se existir
+            configuracao_elemento_detalhe: detalhe.configuracao_elemento_detalhe,
             massa_pesada: detalhe.massa_pesada === '' ? null : Number(detalhe.massa_pesada),
             absorbancia_medida: detalhe.absorbancia_medida === '' ? null : Number(detalhe.absorbancia_medida),
-            // O resultado será calculado no backend, então podemos enviar null ou o valor atual se já foi calculado
             resultado: detalhe.resultado === '' ? null : Number(detalhe.resultado),
         }));
 
         const dataToSubmit = {
             ...registro,
             detalhes: cleanedDetalhes,
-            // produto_mat_prima já é enviado como ID, não precisa de conversão
         };
+
+        // console.log("Dados a serem enviados:", dataToSubmit); // Para depuração
 
         if (isEditMode) {
             axios.put(`${API_URL}${id}/`, dataToSubmit)
@@ -165,6 +175,16 @@ function RegistroAnaliseForm() {
                 });
         }
     };
+
+    // Função para filtrar as configurações de elemento já selecionadas em outros detalhes do mesmo registro
+    const getAvailableConfiguracoesElementos = (currentIndex) => {
+        const selectedConfigIds = registro.detalhes
+            .filter((_, i) => i !== currentIndex) // Excluir o item atual da verificação
+            .map(detalhe => detalhe.configuracao_elemento_detalhe);
+        
+        return configuracoesElementosDisponiveis.filter(config => !selectedConfigIds.includes(String(config.id)));
+    };
+
 
     return (
         <div className="container mt-4">
@@ -240,79 +260,90 @@ function RegistroAnaliseForm() {
                         {/* Seção de Detalhes da Análise */}
                         <h3 className="mt-4 mb-3">Detalhes da Análise</h3>
                         {registro.detalhes.length === 0 && (
-                            <p className="text-muted">Nenhum detalhe de análise adicionado. Clique em "Adicionar Detalhe" para começar.</p>
+                            <p className="text-muted">Nenhum detalhe de análise adicionado. Selecione um Produto e clique em "Adicionar Detalhe" para começar.</p>
                         )}
                         {registro.detalhes.map((detalhe, index) => (
-                            <div key={index} className="card mb-3"> {/* Use card para cada detalhe */}
-                                <div className="card-body">
-                                    <h5 className="card-title">Detalhe #{index + 1}</h5>
-                                    <div className="row">
-                                        <div className="col-md-6 mb-3">
-                                            <label htmlFor={`configuracao_analise_${index}`} className="form-label">Configuração de Análise</label>
-                                            <select
-                                                className="form-control"
-                                                id={`configuracao_analise_${index}`}
-                                                name="configuracao_analise"
-                                                value={detalhe.configuracao_analise}
-                                                onChange={(e) => handleDetalheChange(index, e)}
-                                                required
-                                            >
-                                                <option value="">Selecione uma Configuração</option>
-                                                {configuracoesAnalise.map(config => (
-                                                    <option key={config.id} value={config.id}>
-                                                        {config.elemento_quimico_simbolo} - Dil. 1({config.diluicao1_X}:{config.diluicao1_Y})
-                                                        {config.diluicao2_X && ` / Dil. 2(${config.diluicao2_X}:${config.diluicao2_Y})`}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label htmlFor={`massa_pesada_${index}`} className="form-label">Massa Pesada (g)</label>
-                                            <input
-                                                type="number"
-                                                step="0.0001"
-                                                className="form-control"
-                                                id={`massa_pesada_${index}`}
-                                                name="massa_pesada"
-                                                value={detalhe.massa_pesada}
-                                                onChange={(e) => handleDetalheChange(index, e)}
-                                            />
-                                        </div>
-                                        <div className="col-md-3 mb-3">
-                                            <label htmlFor={`absorbancia_medida_${index}`} className="form-label">Absorbância Medida</label>
-                                            <input
-                                                type="number"
-                                                step="0.0001"
-                                                className="form-control"
-                                                id={`absorbancia_medida_${index}`}
-                                                name="absorbancia_medida"
-                                                value={detalhe.absorbancia_medida}
-                                                onChange={(e) => handleDetalheChange(index, e)}
-                                            />
-                                        </div>
-                                        {detalhe.resultado !== null && (
-                                            <div className="col-md-12 mb-3">
-                                                <label className="form-label">Resultado (Concentração)</label>
-                                                <p className="form-control-static">
-                                                    {detalhe.resultado !== undefined && detalhe.resultado !== null ? detalhe.resultado.toFixed(4) : 'N/A'}
-                                                </p>
-                                            </div>
-                                        )}
+                            <div key={index} className="card mb-3 p-3 border-secondary"> {/* Use card para cada detalhe */}
+                                <h5 className="mb-3">Detalhe #{index + 1}</h5>
+                                <div className="row">
+                                    <div className="col-md-12 mb-3">
+                                        <label htmlFor={`configuracao_elemento_detalhe_${index}`} className="form-label">Configuração de Elemento (Produto-Elemento)</label>
+                                        <select
+                                            className="form-control"
+                                            id={`configuracao_elemento_detalhe_${index}`}
+                                            name="configuracao_elemento_detalhe"
+                                            value={detalhe.configuracao_elemento_detalhe}
+                                            onChange={(e) => handleDetalheChange(index, e)}
+                                            required
+                                            disabled={!registro.produto_mat_prima} // Desabilita se nenhum produto for selecionado
+                                        >
+                                            <option value="">Selecione uma Configuração de Elemento</option>
+                                            {getAvailableConfiguracoesElementos(index).map(configElem => (
+                                                <option key={configElem.id} value={configElem.id}>
+                                                    {configElem.elemento_quimico_simbolo} - Diluição 1: {configElem.diluicao1_X}mL:{configElem.diluicao1_Y}mL
+                                                    {configElem.diluicao2_X && configElem.diluicao2_Y && ` / Diluição 2: ${configElem.diluicao2_X}mL:${configElem.diluicao2_Y}mL`}
+                                                </option>
+                                            ))}
+                                            {/* Se o detalhe atual já tem uma config selecionada, mas ela não está mais nas opções disponíveis (porque já foi selecionada em outro detalhe), ainda a mostramos */}
+                                            {detalhe.configuracao_elemento_detalhe && configuracoesElementosDisponiveis.find(ce => String(ce.id) === String(detalhe.configuracao_elemento_detalhe)) &&
+                                            !getAvailableConfiguracoesElementos(index).find(ce => String(ce.id) === String(detalhe.configuracao_elemento_detalhe)) && (
+                                                <option value={detalhe.configuracao_elemento_detalhe}>
+                                                    {configuracoesElementosDisponiveis.find(ce => String(ce.id) === String(detalhe.configuracao_elemento_detalhe))?.elemento_quimico_simbolo} - Diluição 1: {configuracoesElementosDisponiveis.find(ce => String(ce.id) === String(detalhe.configuracao_elemento_detalhe))?.diluicao1_X}mL:{configuracoesElementosDisponiveis.find(ce => String(ce.id) === String(detalhe.configuracao_elemento_detalhe))?.diluicao1_Y}mL
+                                                </option>
+                                            )}
+                                        </select>
+                                        {/* Mensagem de ajuda se nenhum produto for selecionado */}
+                                        {!registro.produto_mat_prima && <small className="form-text text-muted">Selecione um Produto acima para carregar as configurações de elementos disponíveis.</small>}
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="btn btn-sm btn-danger"
-                                        onClick={() => handleRemoveDetalhe(index)}
-                                    >
-                                        Remover Detalhe
-                                    </button>
                                 </div>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label htmlFor={`massa_pesada_${index}`} className="form-label">Massa Pesada (g)</label>
+                                        <input
+                                            type="number"
+                                            step="0.0001"
+                                            className="form-control"
+                                            id={`massa_pesada_${index}`}
+                                            name="massa_pesada"
+                                            value={detalhe.massa_pesada}
+                                            onChange={(e) => handleDetalheChange(index, e)}
+                                        />
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label htmlFor={`absorbancia_medida_${index}`} className="form-label">Absorbância Medida</label>
+                                        <input
+                                            type="number"
+                                            step="0.0001"
+                                            className="form-control"
+                                            id={`absorbancia_medida_${index}`}
+                                            name="absorbancia_medida"
+                                            value={detalhe.absorbancia_medida}
+                                            onChange={(e) => handleDetalheChange(index, e)}
+                                        />
+                                    </div>
+                                    {detalhe.resultado !== null && (
+                                        <div className="col-md-12 mb-3">
+                                            <label className="form-label">Resultado (Concentração)</label>
+                                            <p className="form-control-static">
+                                                {detalhe.resultado !== undefined && detalhe.resultado !== null ? detalhe.resultado.toFixed(4) : 'N/A'}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-danger"
+                                    onClick={() => handleRemoveDetalhe(index)}
+                                >
+                                    Remover Detalhe
+                                </button>
                             </div>
                         ))}
                         <button
                             type="button"
                             className="btn btn-secondary mt-3 mb-4"
                             onClick={handleAddDetalhe}
+                            disabled={!registro.produto_mat_prima} // Desabilita se nenhum produto for selecionado
                         >
                             Adicionar Detalhe
                         </button>
