@@ -1,23 +1,7 @@
 from django.db import models
-
-# Create your models here.
-# PROJETOHABER/backend/api/models.py
-
-from django.db import models
-
-class ProdutoMatPrima(models.Model):
-    nome = models.CharField(max_length=255)
-    id_ou_op = models.CharField(max_length=100, unique=True, verbose_name="ID ou OP")
-
-    def __str__(self):
-        return f"{self.nome} ({self.id_ou_op})"
-
-class ElementoQuimico(models.Model):
-    nome = models.CharField(max_length=255)
-    simbolo = models.CharField(max_length=10, unique=True)
-
-    def __str__(self):
-        return f"{self.nome} ({self.simbolo})"
+# Importa os modelos corretos dos apps produtos e elementos
+from produtos.models import ProdutoMatPrima
+from elementos.models import ElementoQuimico
 
 class ConfiguracaoAnalise(models.Model):
     produto_mat_prima = models.ForeignKey(ProdutoMatPrima, on_delete=models.CASCADE, related_name='configuracoes')
@@ -46,21 +30,23 @@ class ConfiguracaoAnalise(models.Model):
 # NOVO MODELO INTERMEDIÁRIO
 class ConfiguracaoElementoDetalhe(models.Model):
     configuracao_analise = models.ForeignKey(ConfiguracaoAnalise, on_delete=models.CASCADE, related_name='detalhes_elementos')
-    elemento_quimico = models.ForeignKey(ElementoQuimico, on_delete=models.CASCADE)
+    elemento_quimico = models.ForeignKey(ElementoQuimico, on_delete=models.CASCADE) # Este é obrigatório e precisa do ID
 
+    # ESTES SÃO OBRIGATÓRIOS (não têm null=True, blank=True)
     diluicao1_X = models.DecimalField(max_digits=10, decimal_places=4)
     diluicao1_Y = models.DecimalField(max_digits=10, decimal_places=4)
+    
+    # ESTES SÃO OPCIONAIS (têm null=True, blank=True)
     diluicao2_X = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     diluicao2_Y = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     limite_min = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     limite_max = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
 
     class Meta:
-        unique_together = ('configuracao_analise', 'elemento_quimico') # Garante que um elemento só apareça uma vez por configuração
+        unique_together = ('configuracao_analise', 'elemento_quimico')
 
     def __str__(self):
         return f"{self.configuracao_analise.produto_mat_prima.nome} - {self.elemento_quimico.simbolo}"
-
 
 class RegistroAnalise(models.Model):
     STATUS_CHOICES = [
@@ -69,7 +55,7 @@ class RegistroAnalise(models.Model):
         ('CANCELADO', 'Cancelado'),
     ]
 
-    produto_mat_prima = models.ForeignKey(ProdutoMatPrima, on_delete=models.CASCADE, related_name='registros_analise')
+    produto_mat_prima = models.ForeignKey(ProdutoMatPrima, on_delete=models.CASCADE, related_name='registros_analise_api')
     data_analise = models.DateField()
     analista = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_ANDAMENTO')

@@ -137,21 +137,40 @@ function ConfiguracaoAnaliseForm() {
 
         // Limpeza e formatação dos dados para o backend:
         // Converter strings vazias para null para campos numéricos, e IDs para Number
+        // Trocar vírgula por ponto para garantir formato aceito pelo backend
+
+        // Função para converter string para número (aceita vírgula como decimal)
+        function parseNumberField(val) {
+            if (val === '' || val === null || val === undefined) return null;
+            if (typeof val === 'string') {
+                // Remove espaços e troca vírgula por ponto
+                const normalized = val.trim().replace(',', '.');
+                // Tenta converter para float
+                const asFloat = parseFloat(normalized);
+                // Se for inteiro, retorna inteiro
+                if (!isNaN(asFloat)) {
+                    if (Number.isInteger(asFloat)) return asFloat;
+                    return asFloat;
+                }
+                return null;
+            }
+            if (typeof val === 'number') return val;
+            return null;
+        }
+
         const cleanedDetalhesElementos = configuracao.detalhes_elementos.map(detalhe => ({
-            ...(detalhe.id && { id: detalhe.id }), // Inclui ID apenas se existir (para PUT)
-            elemento_quimico: Number(detalhe.elemento_quimico), // O ID do FK precisa ser Number
-            
-            // Tratamento para diluições e limites: se for string vazia, vira null. Senão, vira Number.
-            diluicao1_X: detalhe.diluicao1_X === '' ? null : Number(detalhe.diluicao1_X),
-            diluicao1_Y: detalhe.diluicao1_Y === '' ? null : Number(detalhe.diluicao1_Y),
-            diluicao2_X: detalhe.diluicao2_X === '' ? null : Number(detalhe.diluicao2_X),
-            diluicao2_Y: detalhe.diluicao2_Y === '' ? null : Number(detalhe.diluicao2_Y),
-            limite_min: detalhe.limite_min === '' ? null : Number(detalhe.limite_min),
-            limite_max: detalhe.limite_max === '' ? null : Number(detalhe.limite_max),
+            ...(detalhe.id && { id: detalhe.id }),
+            elemento_quimico: parseInt(detalhe.elemento_quimico, 10),
+            diluicao1_X: parseNumberField(detalhe.diluicao1_X),
+            diluicao1_Y: parseNumberField(detalhe.diluicao1_Y),
+            diluicao2_X: parseNumberField(detalhe.diluicao2_X),
+            diluicao2_Y: parseNumberField(detalhe.diluicao2_Y),
+            limite_min: parseNumberField(detalhe.limite_min),
+            limite_max: parseNumberField(detalhe.limite_max),
         }));
 
         const dataToSubmit = {
-            produto_mat_prima: Number(configuracao.produto_mat_prima), // O ID do FK precisa ser Number
+            produto_mat_prima: parseInt(configuracao.produto_mat_prima, 10),
             detalhes_elementos: cleanedDetalhesElementos,
         };
 

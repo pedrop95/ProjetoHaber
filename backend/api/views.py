@@ -1,7 +1,11 @@
 from django.shortcuts import render
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 
 # Create your views here.
-# PROJETOHABER/backend/api/views.py
+
+
+
 
 from rest_framework import viewsets
 from .models import ProdutoMatPrima, ElementoQuimico, ConfiguracaoAnalise, RegistroAnalise, DetalheAnalise, ConfiguracaoElementoDetalhe
@@ -23,9 +27,29 @@ class ElementoQuimicoViewSet(viewsets.ModelViewSet):
     serializer_class = ElementoQuimicoSerializer
 
 class ConfiguracaoAnaliseViewSet(viewsets.ModelViewSet):
-    # Precisamos pré-carregar os detalhes dos elementos para o serializer
     queryset = ConfiguracaoAnalise.objects.all().prefetch_related('detalhes_elementos__elemento_quimico')
     serializer_class = ConfiguracaoAnaliseSerializer
+
+    def create(self, request, *args, **kwargs):
+        print("\n>>> ENTROU NO MÉTODO CREATE DO ConfiguracaoAnaliseViewSet", flush=True)
+        print("\n--- DEBUG: Payload recebido na API ---", flush=True)
+        print(request.data, flush=True)
+        print("--- FIM DEBUG PAYLOAD ---\n", flush=True)
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("\n--- DEBUG: Erros de validação do serializer ---", flush=True)
+            print(serializer.errors, flush=True)
+            print("--- FIM DEBUG ERROS ---\n", flush=True)
+            return Response(serializer.errors, status=400)
+
+        print("\n--- DEBUG: Dados validados ---", flush=True)
+        print(serializer.validated_data, flush=True)
+        print("--- FIM DEBUG DADOS VALIDADOS ---\n", flush=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class RegistroAnaliseViewSet(viewsets.ModelViewSet):
     # Certifique-se de pré-carregar os detalhes aninhados para exibição
