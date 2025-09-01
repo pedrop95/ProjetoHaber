@@ -110,12 +110,12 @@ class ConfiguracaoAnaliseSerializer(serializers.ModelSerializer):
 
 # Serializer para DetalheAnalise
 class DetalheAnaliseSerializer(serializers.ModelSerializer):
-    # Adicionar campos de leitura para detalhes do elemento/configuração
     configuracao_elemento_detalhe_elemento_nome = serializers.CharField(source='configuracao_elemento_detalhe.elemento_quimico.nome', read_only=True)
     configuracao_elemento_detalhe_elemento_simbolo = serializers.CharField(source='configuracao_elemento_detalhe.elemento_quimico.simbolo', read_only=True)
     configuracao_elemento_detalhe_diluicao1_X = serializers.DecimalField(source='configuracao_elemento_detalhe.diluicao1_X', max_digits=10, decimal_places=4, read_only=True)
     configuracao_elemento_detalhe_diluicao1_Y = serializers.DecimalField(source='configuracao_elemento_detalhe.diluicao1_Y', max_digits=10, decimal_places=4, read_only=True)
-    # Adicione outros campos de diluição/limite se precisar lê-los aqui
+    massa_pesada = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True)
+    absorbancia_medida = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True)
 
     class Meta:
         model = DetalheAnalise
@@ -127,12 +127,12 @@ class DetalheAnaliseSerializer(serializers.ModelSerializer):
         ]
         # Certifique-se que o FK registro_analise não seja required na escrita aninhada
         extra_kwargs = {
-            'registro_analise': {'required': False, 'allow_null': True}
+            'registro_analise': {'required': False, 'read_only': True}
         }
 
 # Serializer para RegistroAnalise
 class RegistroAnaliseSerializer(serializers.ModelSerializer):
-    detalhes = DetalheAnaliseSerializer(many=True) # Campo aninhado para detalhes da análise
+    detalhes = DetalheAnaliseSerializer(many=True, required=False) # Permite leitura e escrita dos detalhes
     
     produto_mat_prima_nome = serializers.CharField(source='produto_mat_prima.nome', read_only=True)
     produto_mat_prima_id_ou_op = serializers.CharField(source='produto_mat_prima.id_ou_op', read_only=True)

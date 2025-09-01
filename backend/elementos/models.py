@@ -3,12 +3,20 @@
 from django.db import models
 
 class ElementoQuimico(models.Model):
+
     nome = models.CharField(
         max_length=255,
         unique=True,
         null=False,
         blank=False,
         verbose_name="Nome do Elemento Químico"
+    )
+    simbolo = models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        default="X",
+        verbose_name="Símbolo do Elemento Químico"
     )
 
     class Meta:

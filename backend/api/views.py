@@ -1,3 +1,4 @@
+print("Arquivo views.py carregado!", flush=True)
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -19,14 +20,23 @@ from .serializers import (
 )
 
 class ProdutoMatPrimaViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        print("[DEBUG] Entrou no create ProdutoMatPrimaViewSet", flush=True)
+        return super().create(request, *args, **kwargs)
     queryset = ProdutoMatPrima.objects.all()
     serializer_class = ProdutoMatPrimaSerializer
 
 class ElementoQuimicoViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        print("[DEBUG] Entrou no create ElementoQuimicoViewSet", flush=True)
+        return super().create(request, *args, **kwargs)
     queryset = ElementoQuimico.objects.all()
     serializer_class = ElementoQuimicoSerializer
 
 class ConfiguracaoAnaliseViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        print("[DEBUG] Entrou no create ConfiguracaoAnaliseViewSet", flush=True)
+        return super().create(request, *args, **kwargs)
     queryset = ConfiguracaoAnalise.objects.all().prefetch_related('detalhes_elementos__elemento_quimico')
     serializer_class = ConfiguracaoAnaliseSerializer
 
@@ -59,7 +69,39 @@ class RegistroAnaliseViewSet(viewsets.ModelViewSet):
     )
     serializer_class = RegistroAnaliseSerializer
 
+    def create(self, request, *args, **kwargs):
+        print("\n>>> ENTROU NO MÉTODO CREATE DO RegistroAnaliseViewSet", flush=True)
+        print("\n--- DEBUG: Payload recebido na API ---", flush=True)
+        print(request.data, flush=True)
+        print("--- FIM DEBUG PAYLOAD ---\n", flush=True)
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("\n--- DEBUG: Erros de validação do serializer ---", flush=True)
+            print(serializer.errors, flush=True)
+            print("--- FIM DEBUG ERROS ---\n", flush=True)
+            return Response(serializer.errors, status=400)
+
+        print("\n--- DEBUG: Dados validados ---", flush=True)
+        print(serializer.validated_data, flush=True)
+        print("--- FIM DEBUG DADOS VALIDADOS ---\n", flush=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        print("\n--- DEBUG: Dados validados ---", flush=True)
+        print(serializer.validated_data, flush=True)
+        print("--- FIM DEBUG DADOS VALIDADOS ---\n", flush=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 class DetalheAnaliseViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        print("[DEBUG] Entrou no create DetalheAnaliseViewSet", flush=True)
+        return super().create(request, *args, **kwargs)
     queryset = DetalheAnalise.objects.all().select_related(
         'registro_analise',
         'configuracao_elemento_detalhe__elemento_quimico', # Selecionar o elemento químico também
@@ -69,5 +111,8 @@ class DetalheAnaliseViewSet(viewsets.ModelViewSet):
 
 # Opcional: Se você precisar de um endpoint separado para os detalhes dos elementos de configuração
 class ConfiguracaoElementoDetalheViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        print("[DEBUG] Entrou no create ConfiguracaoElementoDetalheViewSet", flush=True)
+        return super().create(request, *args, **kwargs)
     queryset = ConfiguracaoElementoDetalhe.objects.all()
     serializer_class = ConfiguracaoElementoDetalheSerializer

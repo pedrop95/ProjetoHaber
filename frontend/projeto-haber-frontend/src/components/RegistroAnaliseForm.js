@@ -139,40 +139,53 @@ function RegistroAnaliseForm() {
         // Limpeza dos dados: converter strings vazias para null para campos numéricos
         const cleanedDetalhes = registro.detalhes.map(detalhe => ({
             ...detalhe,
-            ...(detalhe.id && { id: detalhe.id }), // Inclui ID apenas se existir
-            configuracao_elemento_detalhe: detalhe.configuracao_elemento_detalhe,
+            ...(detalhe.id && { id: detalhe.id }),
+            configuracao_elemento_detalhe: Number(detalhe.configuracao_elemento_detalhe),
             massa_pesada: detalhe.massa_pesada === '' ? null : Number(detalhe.massa_pesada),
             absorbancia_medida: detalhe.absorbancia_medida === '' ? null : Number(detalhe.absorbancia_medida),
             resultado: detalhe.resultado === '' ? null : Number(detalhe.resultado),
         }));
 
+        // Payload corrigido: campo 'detalhes' sempre presente e preenchido
         const dataToSubmit = {
-            ...registro,
+            produto_mat_prima: registro.produto_mat_prima,
+            data_analise: registro.data_analise,
+            analista: registro.analista,
+            status: registro.status,
             detalhes: cleanedDetalhes,
         };
 
-        // console.log("Dados a serem enviados:", dataToSubmit); // Para depuração
+        // Debug detalhado do payload
+        console.log("[DEBUG] Dados a serem enviados:", JSON.stringify(dataToSubmit, null, 2));
+
+        const handleError = (error, acao) => {
+            if (error.response) {
+                console.error(`[DEBUG] Erro do backend ao ${acao}:`, error.response.data);
+                alert(`Erro ao ${acao}:\n` + JSON.stringify(error.response.data, null, 2));
+            } else {
+                console.error(`[DEBUG] Erro de rede ao ${acao}:`, error.message);
+                alert(`Erro de rede ao ${acao}: ` + error.message);
+            }
+        };
 
         if (isEditMode) {
-            axios.put(`${API_URL}${id}/`, dataToSubmit)
+            axios.put(`${API_URL}${id}/`, dataToSubmit, {
+                headers: { 'Content-Type': 'application/json' }
+            })
                 .then(() => {
                     alert('Registro de Análise atualizado com sucesso!');
                     navigate('/registros-analise');
                 })
-                .catch(error => {
-                    console.error("Erro ao atualizar registro de análise:", error.response ? error.response.data : error);
-                    alert('Erro ao atualizar registro de análise. Verifique o console para mais detalhes.');
-                });
+                .catch(error => handleError(error, 'atualizar registro de análise'));
         } else {
-            axios.post(API_URL, dataToSubmit)
+            axios.post(API_URL, dataToSubmit, {
+                headers: { 'Content-Type': 'application/json' }
+            })
                 .then(() => {
                     alert('Registro de Análise adicionado com sucesso!');
                     navigate('/registros-analise');
                 })
-                .catch(error => {
-                    console.error("Erro ao adicionar registro de análise:", error.response ? error.response.data : error);
-                    alert('Erro ao adicionar registro de análise. Verifique o console para mais detalhes.');
-                });
+                .catch(error => handleError(error, 'adicionar registro de análise'));
         }
     };
 
