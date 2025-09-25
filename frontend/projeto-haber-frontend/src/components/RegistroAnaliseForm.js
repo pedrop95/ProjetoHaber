@@ -338,7 +338,9 @@ function RegistroAnaliseForm() {
                                         <div className="col-md-12 mb-3">
                                             <label className="form-label">Resultado (Concentração)</label>
                                             <p className="form-control-static">
-                                                {detalhe.resultado !== undefined && detalhe.resultado !== null ? detalhe.resultado.toFixed(4) : 'N/A'}
+                                                {detalhe.resultado !== undefined && detalhe.resultado !== null && !isNaN(Number(detalhe.resultado))
+                                                    ? Number(detalhe.resultado).toFixed(4)
+                                                    : 'N/A'}
                                             </p>
                                         </div>
                                     )}

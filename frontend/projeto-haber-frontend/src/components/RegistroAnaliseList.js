@@ -72,7 +72,7 @@ function RegistroAnaliseList() {
                                     {registros.map(registro => (
                                         <tr key={registro.id}>
                                             <td>{registro.id}</td>
-                                            <td>{registro.produto_nome} ({registro.produto_id_ou_op})</td>
+                                            <td>{registro.produto_mat_prima_nome} ({registro.produto_mat_prima_id_ou_op})</td>
                                             <td>{new Date(registro.data_analise).toLocaleDateString()}</td>
                                             <td>{getStatusBadge(registro.status)}</td>
                                             <td>{registro.analista}</td>
