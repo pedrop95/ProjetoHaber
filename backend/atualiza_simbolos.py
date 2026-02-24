@@ -2,6 +2,17 @@
 
 import os
 import django
+from pathlib import Path
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    env_file = Path(__file__).resolve().parent / '.env'
+    if env_file.exists():
+        load_dotenv(env_file)
+except ImportError:
+    pass  # python-dotenv not installed, use system env vars
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'projeto_haber_backend.settings')
 django.setup()
 

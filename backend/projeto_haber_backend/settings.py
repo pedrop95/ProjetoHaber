@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8m!st@zah#ealf7w+z=@7^-f%_668pks%bs7)41akffspp18wa'
+# Read sensitive values from environment variables with reasonable fallbacks for dev
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-8m!st@zah#ealf7w+z=@7^-f%_668pks%bs7)41akffspp18wa'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
 
 
 # Application definition
@@ -85,13 +90,13 @@ WSGI_APPLICATION = 'projeto_haber_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'projeto_haber',         # Nome do banco de dados que você criou
-        'USER': 'haber_user',          # Nome do usuário MySQL que você criou
-        'PASSWORD': '6m;j3SEDx73l', # << SUA SENHA AQUI! Use a senha definida para 'haber_user' >>
-        'HOST': 'localhost',           # Ou '127.0.0.1'
-        'PORT': '3306',                # Porta padrão do MySQL
+        'NAME': os.environ.get('DB_NAME', 'projeto_haber'),
+        'USER': os.environ.get('DB_USER', 'haber_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', '6m;j3SEDx73l'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {
-            'sql_mode': 'traditional', # Opcional: Garante que o MySQL se comporte de forma mais estrita com SQL
+            'sql_mode': os.environ.get('DB_SQL_MODE', 'traditional'),
         }
     }
 }
@@ -139,8 +144,11 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configurações CORS
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3001",  # Permite requisições do seu frontend React
-    "http://127.0.0.1:3001",  # Outra forma de referenciar localhost
-    # Adicione outros domínios de frontend se necessário no futuro
-]
+_cors_env = os.environ.get('CORS_ALLOWED_ORIGINS')
+if _cors_env:
+    CORS_ALLOWED_ORIGINS = [u.strip() for u in _cors_env.split(',') if u.strip()]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3001",  # Permite requisições do seu frontend React
+        "http://127.0.0.1:3001",  # Outra forma de referenciar localhost
+    ]

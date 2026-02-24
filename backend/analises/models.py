@@ -41,6 +41,74 @@ class DetalheAnalise(models.Model):
     resultado = models.DecimalField(max_digits=10, decimal_places=4)
     massa_pesada = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     absorbancia_medida = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    
+    # Campos de diluição 1
+    volume_final_diluicao_1 = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+        verbose_name="Volume Final da Diluição 1 (mL)"
+    )
+    
+    # Campos de diluição 2 (opcionais)
+    volume_inicial_diluicao_2 = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+        verbose_name="Volume Inicial da Diluição 2 (mL)"
+    )
+    volume_final_diluicao_2 = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+        verbose_name="Volume Final da Diluição 2 (mL)"
+    )
+
+    def calcular_concentracao(self):
+        """
+        Calcula a concentração baseado na fórmula:
+        - Sem diluição 2: absorbância / (massa_pesada / volume_final_diluicao_1)
+        - Com diluição 2: absorbância / ((massa_pesada / volume_final_diluicao_1) * (volume_inicial_diluicao_2 / volume_final_diluicao_2))
+        
+        Retorna None se faltarem dados obrigatórios.
+        """
+        # Verifica se todos os campos obrigatórios estão preenchidos
+        if not all([self.absorbancia_medida, self.massa_pesada, self.volume_final_diluicao_1]):
+            return None
+        
+        from decimal import Decimal
+        
+        # Denominador da primeira parte da fórmula
+        denominador_base = self.massa_pesada / self.volume_final_diluicao_1
+        
+        # Se não há diluição 2
+        if not self.volume_inicial_diluicao_2 or not self.volume_final_diluicao_2:
+            # Fórmula simples: absorbância / (massa_pesada / volume_final_diluicao_1)
+            if denominador_base != 0:
+                concentracao = self.absorbancia_medida / denominador_base
+                return float(concentracao)
+            return None
+        
+        # Se há diluição 2
+        fator_diluicao_2 = self.volume_inicial_diluicao_2 / self.volume_final_diluicao_2
+        denominador_total = denominador_base * fator_diluicao_2
+        
+        if denominador_total != 0:
+            concentracao = self.absorbancia_medida / denominador_total
+            return float(concentracao)
+        
+        return None
+
+    def calcular_concentracao_ppm(self):
+        """
+        Calcula a concentração em ppm (partes por milhão).
+        Retorna o mesmo valor que calcular_concentracao() já que é a unidade padrão.
+        """
+        return self.calcular_concentracao()
+
+    def calcular_concentracao_porcentagem(self):
+        """
+        Calcula a concentração em porcentagem.
+        Fórmula: ppm / 10000
+        """
+        concentracao_ppm = self.calcular_concentracao()
+        if concentracao_ppm is not None:
+            return concentracao_ppm / 10000
+        return None
 
     def __str__(self):
         return f"Detalhe de {self.elemento_quimico.nome} para {self.registro_analise}"

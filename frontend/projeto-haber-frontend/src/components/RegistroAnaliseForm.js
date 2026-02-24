@@ -91,7 +91,15 @@ function RegistroAnaliseForm() {
             ...prevRegistro,
             detalhes: [
                 ...prevRegistro.detalhes,
-                { configuracao_elemento_detalhe: '', massa_pesada: '', absorbancia_medida: '', resultado: null }
+                { 
+                    configuracao_elemento_detalhe: '', 
+                    massa_pesada: '', 
+                    absorbancia_medida: '', 
+                    volume_final_diluicao_1: '',
+                    volume_inicial_diluicao_2: '',
+                    volume_final_diluicao_2: '',
+                    resultado: null 
+                }
             ]
         }));
     };
@@ -101,15 +109,16 @@ function RegistroAnaliseForm() {
         const newDetalhes = [...registro.detalhes];
         newDetalhes[index][name] = value;
 
-        // Se mudou a configuração do elemento, pode-se usar para info
+        // Se mudou a configuração do elemento, preencher dados de diluição automaticamente
         if (name === "configuracao_elemento_detalhe") {
             const detalheConfigSelecionada = configuracoesElementosDisponiveis.find(
                 config => config.id.toString() === value
             );
             if (detalheConfigSelecionada) {
-                // Aqui você pode definir valores padrão se houver, ou deixar em branco
-                // newDetalhes[index].massa_pesada = detalheConfigSelecionada.massa_padrao || '';
-                // newDetalhes[index].absorbancia_medida = detalheConfigSelecionada.absorbancia_padrao || '';
+                // Auto-preencher os volumes de diluição a partir da configuração
+                newDetalhes[index].volume_final_diluicao_1 = detalheConfigSelecionada.diluicao1_Y || '';
+                newDetalhes[index].volume_inicial_diluicao_2 = detalheConfigSelecionada.diluicao2_X || '';
+                newDetalhes[index].volume_final_diluicao_2 = detalheConfigSelecionada.diluicao2_Y || '';
             }
         }
 
@@ -143,6 +152,9 @@ function RegistroAnaliseForm() {
             configuracao_elemento_detalhe: Number(detalhe.configuracao_elemento_detalhe),
             massa_pesada: detalhe.massa_pesada === '' ? null : Number(detalhe.massa_pesada),
             absorbancia_medida: detalhe.absorbancia_medida === '' ? null : Number(detalhe.absorbancia_medida),
+            volume_final_diluicao_1: detalhe.volume_final_diluicao_1 === '' ? null : Number(detalhe.volume_final_diluicao_1),
+            volume_inicial_diluicao_2: detalhe.volume_inicial_diluicao_2 === '' ? null : Number(detalhe.volume_inicial_diluicao_2),
+            volume_final_diluicao_2: detalhe.volume_final_diluicao_2 === '' ? null : Number(detalhe.volume_final_diluicao_2),
             resultado: detalhe.resultado === '' ? null : Number(detalhe.resultado),
         }));
 
@@ -189,7 +201,52 @@ function RegistroAnaliseForm() {
         }
     };
 
-    // Função para filtrar as configurações de elemento já selecionadas em outros detalhes do mesmo registro
+    // Função para calcular concentração baseada na fórmula
+    const calcularConcentracao = (detalhe) => {
+        const { absorbancia_medida, massa_pesada, volume_final_diluicao_1, volume_inicial_diluicao_2, volume_final_diluicao_2 } = detalhe;
+        
+        // Verifica se todos os campos obrigatórios estão preenchidos
+        if (!absorbancia_medida || !massa_pesada || !volume_final_diluicao_1) {
+            return null;
+        }
+
+        const abs = parseFloat(absorbancia_medida);
+        const massa = parseFloat(massa_pesada);
+        const vol1 = parseFloat(volume_final_diluicao_1);
+
+        // Denominador da primeira parte da fórmula
+        const denominadorBase = massa / vol1;
+
+        // Se não há diluição 2
+        if (!volume_inicial_diluicao_2 || !volume_final_diluicao_2) {
+            // Fórmula simples: absorbância / (massa_pesada / volume_final_diluicao_1)
+            if (denominadorBase !== 0) {
+                return abs / denominadorBase;
+            }
+            return null;
+        }
+
+        // Se há diluição 2
+        const vol_ini_2 = parseFloat(volume_inicial_diluicao_2);
+        const vol_fin_2 = parseFloat(volume_final_diluicao_2);
+        const fatorDiluicao2 = vol_ini_2 / vol_fin_2;
+        const denominadorTotal = denominadorBase * fatorDiluicao2;
+
+        if (denominadorTotal !== 0) {
+            return abs / denominadorTotal;
+        }
+
+        return null;
+    };
+
+    const calcularConcentracaoPorcentagem = (detalhe) => {
+        const concentracaoPpm = calcularConcentracao(detalhe);
+        if (concentracaoPpm !== null) {
+            return concentracaoPpm / 10000;
+        }
+        return null;
+    };
+
     const getAvailableConfiguracoesElementos = (currentIndex) => {
         const selectedConfigIds = registro.detalhes
             .filter((_, i) => i !== currentIndex) // Excluir o item atual da verificação
@@ -334,16 +391,72 @@ function RegistroAnaliseForm() {
                                             onChange={(e) => handleDetalheChange(index, e)}
                                         />
                                     </div>
-                                    {detalhe.resultado !== null && (
-                                        <div className="col-md-12 mb-3">
-                                            <label className="form-label">Resultado (Concentração)</label>
-                                            <p className="form-control-static">
-                                                {detalhe.resultado !== undefined && detalhe.resultado !== null && !isNaN(Number(detalhe.resultado))
-                                                    ? Number(detalhe.resultado).toFixed(4)
-                                                    : 'N/A'}
-                                            </p>
+                                </div>
+
+                                {/* Campos de Diluição */}
+                                <div className="row bg-light p-2 rounded mb-3">
+                                    <h6 className="mb-3">Dados de Diluição <small className="text-muted">(preenchidos automaticamente da configuração)</small></h6>
+                                    <div className="col-md-4 mb-3">
+                                        <label htmlFor={`volume_final_diluicao_1_${index}`} className="form-label">
+                                            Volume Final Diluição 1 (mL)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.0001"
+                                            className="form-control"
+                                            id={`volume_final_diluicao_1_${index}`}
+                                            name="volume_final_diluicao_1"
+                                            value={detalhe.volume_final_diluicao_1}
+                                            readOnly
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label htmlFor={`volume_inicial_diluicao_2_${index}`} className="form-label">
+                                            Volume Inicial Diluição 2 (mL)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.0001"
+                                            className="form-control"
+                                            id={`volume_inicial_diluicao_2_${index}`}
+                                            name="volume_inicial_diluicao_2"
+                                            value={detalhe.volume_inicial_diluicao_2}
+                                            readOnly
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label htmlFor={`volume_final_diluicao_2_${index}`} className="form-label">
+                                            Volume Final Diluição 2 (mL)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.0001"
+                                            className="form-control"
+                                            id={`volume_final_diluicao_2_${index}`}
+                                            name="volume_final_diluicao_2"
+                                            value={detalhe.volume_final_diluicao_2}
+                                            readOnly
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Concentração Calculada */}
+                                <div className="row mb-3">
+                                    <div className="col-md-12">
+                                        <div className="alert alert-info" role="alert">
+                                            <strong>Concentração Calculada:</strong>{' '}
+                                            {calcularConcentracao(detalhe) !== null 
+                                                ? (
+                                                    <>
+                                                        <br/>
+                                                        <span>PPM: <strong>{calcularConcentracao(detalhe).toFixed(6)}</strong> ppm</span>
+                                                        <br/>
+                                                        <span>Porcentagem: <strong>{calcularConcentracaoPorcentagem(detalhe).toFixed(8)}</strong> %</span>
+                                                    </>
+                                                )
+                                                : 'Preencha todos os campos obrigatórios para calcular'}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                                 <button
                                     type="button"
