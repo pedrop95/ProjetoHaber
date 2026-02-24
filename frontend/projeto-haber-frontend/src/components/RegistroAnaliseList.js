@@ -16,7 +16,9 @@ function RegistroAnaliseList() {
     const fetchRegistros = () => {
         axios.get(API_URL)
             .then(response => {
-                setRegistros(response.data);
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosRegistros = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setRegistros(dadosRegistros);
             })
             .catch(error => console.error("Erro ao buscar registros de análise:", error));
     };

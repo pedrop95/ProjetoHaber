@@ -15,7 +15,9 @@ function ElementoQuimicoList() {
     const fetchElementos = () => {
         axios.get(API_URL)
             .then(response => {
-                setElementos(response.data);
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosElementos = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setElementos(dadosElementos);
             })
             .catch(error => console.error("Erro ao buscar elementos químicos:", error));
     };

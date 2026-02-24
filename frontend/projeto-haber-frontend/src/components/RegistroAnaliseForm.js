@@ -41,7 +41,9 @@ function RegistroAnaliseForm() {
         // Filtra por produto_mat_prima que está na ConfiguracaoAnalise que contém o detalhe
         axios.get(`${CONFIGS_ELEMENTO_DETALHE_API_URL}?configuracao_analise__produto_mat_prima=${produtoId}`)
             .then(response => {
-                setConfiguracoesElementosDisponiveis(response.data);
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosConfigs = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setConfiguracoesElementosDisponiveis(dadosConfigs);
             })
             .catch(error => console.error("Erro ao buscar configurações de elementos por produto:", error));
     }, []);
@@ -49,7 +51,11 @@ function RegistroAnaliseForm() {
     useEffect(() => {
         // Carregar produtos
         axios.get(PRODUTOS_API_URL)
-            .then(response => setProdutos(response.data))
+            .then(response => {
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosProdutos = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setProdutos(dadosProdutos);
+            })
             .catch(error => console.error("Erro ao buscar produtos:", error));
 
         // Se for modo de edição, carregar registro existente

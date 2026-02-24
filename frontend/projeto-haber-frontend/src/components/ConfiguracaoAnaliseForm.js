@@ -21,11 +21,19 @@ function ConfiguracaoAnaliseForm() {
 
     useEffect(() => {
         axios.get(PRODUTOS_API_URL)
-            .then(response => setProdutos(response.data))
+            .then(response => {
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosProdutos = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setProdutos(dadosProdutos);
+            })
             .catch(error => console.error("Erro ao buscar produtos:", error));
 
         axios.get(ELEMENTOS_API_URL)
-            .then(response => setElementosDisponiveis(response.data))
+            .then(response => {
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosElementos = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setElementosDisponiveis(dadosElementos);
+            })
             .catch(error => console.error("Erro ao buscar elementos:", error));
 
         if (id) {

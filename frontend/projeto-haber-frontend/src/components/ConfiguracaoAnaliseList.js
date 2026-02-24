@@ -15,7 +15,9 @@ function ConfiguracaoAnaliseList() {
     const fetchConfiguracoes = () => {
         axios.get(API_URL)
             .then(response => {
-                setConfiguracoes(response.data);
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosConfiguracoes = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setConfiguracoes(dadosConfiguracoes);
             })
             .catch(error => console.error("Erro ao buscar configurações de análise:", error));
     };

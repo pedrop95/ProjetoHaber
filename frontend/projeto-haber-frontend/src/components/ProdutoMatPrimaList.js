@@ -15,7 +15,9 @@ function ProdutoMatPrimaList() {
     const fetchProdutos = () => {
         axios.get(API_URL)
             .then(response => {
-                setProdutos(response.data);
+                // Verificar se a resposta é um array ou um objeto com results (paginação)
+                const dadosProdutos = Array.isArray(response.data) ? response.data : (response.data.results || []);
+                setProdutos(dadosProdutos);
             })
             .catch(error => console.error("Erro ao buscar produtos:", error));
     };
