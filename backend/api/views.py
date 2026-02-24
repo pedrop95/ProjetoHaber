@@ -2,6 +2,7 @@ print("Arquivo views.py carregado!", flush=True)
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
 
@@ -114,5 +115,11 @@ class ConfiguracaoElementoDetalheViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         print("[DEBUG] Entrou no create ConfiguracaoElementoDetalheViewSet", flush=True)
         return super().create(request, *args, **kwargs)
-    queryset = ConfiguracaoElementoDetalhe.objects.all()
+    
+    queryset = ConfiguracaoElementoDetalhe.objects.all().select_related(
+        'configuracao_analise__produto_mat_prima',
+        'elemento_quimico'
+    )
     serializer_class = ConfiguracaoElementoDetalheSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['configuracao_analise__produto_mat_prima']
