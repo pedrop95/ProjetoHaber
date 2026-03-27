@@ -7,9 +7,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 function RegistroAnaliseForm() {
     const initialRegistroState = {
         produto_mat_prima: '',
+        id_ou_op: '',
         data_analise: new Date().toISOString().split('T')[0], // Data atual por padrão
         analista: '',
         status: 'EM_ANDAMENTO', // Default status
+        fornecedor: '',
+        lote: '',
+        nf: '',
+        veredito: '',
         detalhes: [],
     };
     const [registro, setRegistro] = useState(initialRegistroState);
@@ -110,6 +115,38 @@ function RegistroAnaliseForm() {
         }));
     };
 
+    // Função para preencher dados de diluição automaticamente
+    const preencherDadosDiluicaoAutomaticamente = (detalhesArray, configsDisponiveis) => {
+        return detalhesArray.map(detalhe => {
+            if (detalhe.configuracao_elemento_detalhe && configsDisponiveis.length > 0) {
+                const detalheConfigSelecionada = configsDisponiveis.find(
+                    config => config.id.toString() === detalhe.configuracao_elemento_detalhe.toString()
+                );
+                if (detalheConfigSelecionada) {
+                    // Auto-preencher apenas se os campos estiverem vazios
+                    return {
+                        ...detalhe,
+                        volume_final_diluicao_1: detalhe.volume_final_diluicao_1 || detalheConfigSelecionada.diluicao1_Y || '',
+                        volume_inicial_diluicao_2: detalhe.volume_inicial_diluicao_2 || detalheConfigSelecionada.diluicao2_X || '',
+                        volume_final_diluicao_2: detalhe.volume_final_diluicao_2 || detalheConfigSelecionada.diluicao2_Y || '',
+                    };
+                }
+            }
+            return detalhe;
+        });
+    };
+
+    // Usar este hook para auto-preencher diluições quando as configurações são carregadas
+    useEffect(() => {
+        if (isEditMode && registro.detalhes.length > 0 && configuracoesElementosDisponiveis.length > 0) {
+            const detalhesPreenchidos = preencherDadosDiluicaoAutomaticamente(registro.detalhes, configuracoesElementosDisponiveis);
+            setRegistro(prevRegistro => ({
+                ...prevRegistro,
+                detalhes: detalhesPreenchidos
+            }));
+        }
+    }, [configuracoesElementosDisponiveis, isEditMode]);
+
     const handleDetalheChange = (index, e) => {
         const { name, value } = e.target;
         const newDetalhes = [...registro.detalhes];
@@ -167,9 +204,14 @@ function RegistroAnaliseForm() {
         // Payload corrigido: campo 'detalhes' sempre presente e preenchido
         const dataToSubmit = {
             produto_mat_prima: registro.produto_mat_prima,
+            id_ou_op: registro.id_ou_op,
             data_analise: registro.data_analise,
             analista: registro.analista,
             status: registro.status,
+            fornecedor: registro.fornecedor || null,
+            lote: registro.lote || null,
+            nf: registro.nf || null,
+            veredito: registro.veredito || null,
             detalhes: cleanedDetalhes,
         };
 
@@ -289,15 +331,15 @@ function RegistroAnaliseForm() {
                                 </select>
                             </div>
                             <div className="col-md-6 mb-3">
-                                <label htmlFor="data_analise" className="form-label">Data da Análise</label>
+                                <label htmlFor="id_ou_op" className="form-label">ID ou OP <span className="text-muted">(opcional - auto-gerado se vazio)</span></label>
                                 <input
-                                    type="date"
+                                    type="text"
                                     className="form-control"
-                                    id="data_analise"
-                                    name="data_analise"
-                                    value={registro.data_analise}
+                                    id="id_ou_op"
+                                    name="id_ou_op"
+                                    value={registro.id_ou_op}
                                     onChange={handleRegistroChange}
-                                    required
+                                    placeholder="Deixe vazio para gerar automaticamente ou digite um ID customizado"
                                 />
                             </div>
                         </div>
@@ -315,6 +357,57 @@ function RegistroAnaliseForm() {
                                 />
                             </div>
                             <div className="col-md-6 mb-3">
+                                <label htmlFor="fornecedor" className="form-label">Fornecedor <span className="text-muted">(opcional)</span></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    id="fornecedor"
+                                    name="fornecedor"
+                                    value={registro.fornecedor}
+                                    onChange={handleRegistroChange}
+                                />
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-6 mb-3">
+                                <label htmlFor="lote" className="form-label">Lote <span className="text-muted">(opcional)</span></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    id="lote"
+                                    name="lote"
+                                    value={registro.lote}
+                                    onChange={handleRegistroChange}
+                                />
+                            </div>
+                            <div className="col-md-6 mb-3">
+                                <label htmlFor="nf" className="form-label">NF <span className="text-muted">(opcional)</span></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    id="nf"
+                                    name="nf"
+                                    value={registro.nf}
+                                    onChange={handleRegistroChange}
+                                />
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-6 mb-3">
+                                <label htmlFor="data_analise" className="form-label">Data da Análise</label>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    id="data_analise"
+                                    name="data_analise"
+                                    value={registro.data_analise}
+                                    onChange={handleRegistroChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-6 mb-3">
                                 <label htmlFor="status" className="form-label">Status</label>
                                 <select
                                     className="form-control"
@@ -331,6 +424,21 @@ function RegistroAnaliseForm() {
                                     ))}
                                 </select>
                             </div>
+                            <div className="col-md-6 mb-3">
+                                <label htmlFor="veredito" className="form-label">Veredito <span className="text-muted">(opcional)</span></label>
+                                <select
+                                    className="form-control"
+                                    id="veredito"
+                                    name="veredito"
+                                    value={registro.veredito}
+                                    onChange={handleRegistroChange}
+                                >
+                                    <option value="">Selecione um veredito</option>
+                                    <option value="APROVADO">Aprovado</option>
+                                    <option value="APROVADO_COM_RESCALVAS">Aprovado com ressalvas</option>
+                                    <option value="REPROVADO">Reprovado</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* Seção de Detalhes da Análise */}
@@ -340,7 +448,7 @@ function RegistroAnaliseForm() {
                         )}
                         {registro.detalhes.map((detalhe, index) => (
                             <div key={index} className="card mb-3 p-3 border-secondary"> {/* Use card para cada detalhe */}
-                                <h5 className="mb-3">Detalhe #{index + 1}</h5>
+                                <h5 className="mb-3">Análise #{index + 1}</h5>
                                 <div className="row">
                                     <div className="col-md-12 mb-3">
                                         <label htmlFor={`configuracao_elemento_detalhe_${index}`} className="form-label">Configuração de Elemento (Produto-Elemento)</label>

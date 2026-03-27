@@ -12,6 +12,7 @@ import ConfiguracaoAnaliseList from './components/ConfiguracaoAnaliseList';
 import ConfiguracaoAnaliseForm from './components/ConfiguracaoAnaliseForm';
 import RegistroAnaliseList from './components/RegistroAnaliseList';
 import RegistroAnaliseForm from './components/RegistroAnaliseForm';
+import RegistroAnaliseView from './components/RegistroAnaliseView';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
           <Route path="/registros-analise" element={<RegistroAnaliseList />} />
           <Route path="/registros-analise/add" element={<RegistroAnaliseForm />} />
           <Route path="/registros-analise/edit/:id" element={<RegistroAnaliseForm />} />
+          <Route path="/registros-analise/view/:id" element={<RegistroAnaliseView />} />
         </Routes>
       </div>
     </Router>

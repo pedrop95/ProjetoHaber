@@ -8,12 +8,18 @@ from elementos.models import ElementoQuimico
 class DetalheAnaliseSerializer(serializers.ModelSerializer):
     # Campos _nome são read-only para exibição
     elemento_quimico_nome = serializers.CharField(source='elemento_quimico.nome', read_only=True)
+    elemento_quimico_simbolo = serializers.CharField(source='elemento_quimico.simbolo', read_only=True)
     concentracao_ppm = serializers.SerializerMethodField(read_only=True)
     concentracao_porcentagem = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DetalheAnalise
-        fields = '__all__'
+        fields = [
+            'id', 'registro_analise', 'elemento_quimico', 'elemento_quimico_nome', 'elemento_quimico_simbolo',
+            'resultado', 'massa_pesada', 'absorbancia_medida',
+            'volume_final_diluicao_1', 'volume_inicial_diluicao_2', 'volume_final_diluicao_2',
+            'configuracao_elemento_detalhe', 'concentracao_ppm', 'concentracao_porcentagem'
+        ]
         extra_kwargs = {
             'registro_analise': {'required': False} # Não é necessário no payload aninhado
         }
@@ -74,6 +80,7 @@ class RegistroAnaliseSerializer(serializers.ModelSerializer):
 
         # Atualiza campos do RegistroAnalise
         instance.produto_mat_prima = validated_data.get('produto_mat_prima', instance.produto_mat_prima)
+        instance.id_ou_op = validated_data.get('id_ou_op', instance.id_ou_op)
         instance.data_analise = validated_data.get('data_analise', instance.data_analise)
         instance.data_producao = validated_data.get('data_producao', instance.data_producao)
         instance.data_validade = validated_data.get('data_validade', instance.data_validade)

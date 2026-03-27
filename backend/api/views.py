@@ -47,20 +47,54 @@ class ConfiguracaoAnaliseViewSet(viewsets.ModelViewSet):
         print(request.data, flush=True)
         print("--- FIM DEBUG PAYLOAD ---\n", flush=True)
 
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print("\n--- DEBUG: Erros de validação do serializer ---", flush=True)
-            print(serializer.errors, flush=True)
-            print("--- FIM DEBUG ERROS ---\n", flush=True)
-            return Response(serializer.errors, status=400)
+        data = request.data
+        produto_mat_prima = data.get('produto_mat_prima')
+        detalhes_elementos = data.get('detalhes_elementos', [])
 
-        print("\n--- DEBUG: Dados validados ---", flush=True)
-        print(serializer.validated_data, flush=True)
-        print("--- FIM DEBUG DADOS VALIDADOS ---\n", flush=True)
+        # Create the main configuration
+        configuracao = ConfiguracaoAnalise.objects.create(produto_mat_prima_id=produto_mat_prima)
 
-        self.perform_create(serializer)
+        # Create the details
+        for detalhe_data in detalhes_elementos:
+            ConfiguracaoElementoDetalhe.objects.create(
+                configuracao_analise=configuracao,
+                elemento_quimico_id=detalhe_data['elemento_quimico'],
+                diluicao1_X=detalhe_data['diluicao1_X'],
+                diluicao1_Y=detalhe_data['diluicao1_Y'],
+                diluicao2_X=detalhe_data.get('diluicao2_X'),
+                diluicao2_Y=detalhe_data.get('diluicao2_Y'),
+                limite_min=detalhe_data.get('limite_min'),
+                limite_max=detalhe_data.get('limite_max'),
+            )
+
+        # Return the created object with serializer
+        serializer = self.get_serializer(configuracao)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        data = request.data
+        detalhes_elementos = data.get('detalhes_elementos', [])
+
+        # Delete existing details
+        instance.detalhes_elementos.all().delete()
+
+        # Create new details
+        for detalhe_data in detalhes_elementos:
+            ConfiguracaoElementoDetalhe.objects.create(
+                configuracao_analise=instance,
+                elemento_quimico_id=detalhe_data['elemento_quimico'],
+                diluicao1_X=detalhe_data['diluicao1_X'],
+                diluicao1_Y=detalhe_data['diluicao1_Y'],
+                diluicao2_X=detalhe_data.get('diluicao2_X'),
+                diluicao2_Y=detalhe_data.get('diluicao2_Y'),
+                limite_min=detalhe_data.get('limite_min'),
+                limite_max=detalhe_data.get('limite_max'),
+            )
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 class RegistroAnaliseViewSet(viewsets.ModelViewSet):
     # Certifique-se de pré-carregar os detalhes aninhados para exibição

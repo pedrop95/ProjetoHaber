@@ -5,9 +5,9 @@ from django.db import models
 class ProdutoMatPrima(models.Model):
     id_ou_op = models.CharField(
         max_length=255,
-        unique=True,
-        null=False,
-        blank=False,
+        unique=False,
+        null=True,
+        blank=True,
         verbose_name="ID ou OP"
     )
     nome = models.CharField(
@@ -23,4 +23,7 @@ class ProdutoMatPrima(models.Model):
         ordering = ['nome'] # Ordena por nome por padrão
 
     def __str__(self):
-        return f"{self.nome} ({self.id_ou_op})"
+        produto_str = self.nome
+        if self.id_ou_op:
+            produto_str += f" ({self.id_ou_op})"
+        return produto_str

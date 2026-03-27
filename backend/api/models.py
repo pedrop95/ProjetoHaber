@@ -25,13 +25,13 @@ class ConfiguracaoAnalise(models.Model):
         # Mas agora, 'produto_mat_prima' sozinho não garante unicidade da CONFIGURAÇÃO,
         # apenas da base da configuração. Se quiser que a mesma configuracao_analise_id
         # nao tenha dois do mesmo elemento, isso sera tratado na inserção do formulario.
-        unique_together = ('produto_mat_prima',) # Isso pode ser removido se um produto puder ter várias "configurações base"
+        # unique_together = ('produto_mat_prima',) # Removido para permitir múltiplas configurações por produto
+        pass
 
 # NOVO MODELO INTERMEDIÁRIO
 class ConfiguracaoElementoDetalhe(models.Model):
     configuracao_analise = models.ForeignKey(ConfiguracaoAnalise, on_delete=models.CASCADE, related_name='detalhes_elementos')
-    elemento_quimico = models.ForeignKey(ElementoQuimico, on_delete=models.CASCADE) # Este é obrigatório e precisa do ID
-
+    elemento_quimico = models.ForeignKey(ElementoQuimico, on_delete=models.CASCADE, related_name='configuracoes_elemento_detalhe')
     # ESTES SÃO OBRIGATÓRIOS (não têm null=True, blank=True)
     diluicao1_X = models.DecimalField(max_digits=10, decimal_places=4)
     diluicao1_Y = models.DecimalField(max_digits=10, decimal_places=4)
@@ -43,7 +43,10 @@ class ConfiguracaoElementoDetalhe(models.Model):
     limite_max = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
 
     class Meta:
-        unique_together = ('configuracao_analise', 'elemento_quimico')
+        # Retiramos a restrição unique_together para permitir a mesma combinação
+        # configuracao_analise + elemento_quimico repetida, pois agora o requisito
+        # é ter duplicatas (ex: fluxo experimental com múltiplas regras).
+        pass
 
     def __str__(self):
         return f"{self.configuracao_analise.produto_mat_prima.nome} - {self.elemento_quimico.simbolo}"
@@ -59,6 +62,15 @@ class RegistroAnalise(models.Model):
     data_analise = models.DateField()
     analista = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_ANDAMENTO')
+    fornecedor = models.CharField(max_length=255, null=True, blank=True)
+    lote = models.CharField(max_length=255, null=True, blank=True)
+    nf = models.CharField(max_length=255, null=True, blank=True)
+    VEREDITO_CHOICES = [
+        ('APROVADO', 'Aprovado'),
+        ('APROVADO_COM_RESCALVAS', 'Aprovado com ressalvas'),
+        ('REPROVADO', 'Reprovado'),
+    ]
+    veredito = models.CharField(max_length=30, choices=VEREDITO_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return f"Registro de Análise para {self.produto_mat_prima.nome} em {self.data_analise}"

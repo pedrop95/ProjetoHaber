@@ -27,7 +27,7 @@ function Navbar() {
         <Link className="navbar-brand" to="/">
           <span style={{ color: '#fff' }}>BR</span>
           <span style={{ color: 'var(--brq-blue)' }}>Q</span>{' '}
-          <small style={{ fontSize: '0.8em', fontWeight: '400' }}>Brasil Química</small>
+          <small style={{ fontSize: '0.8em', fontWeight: '400' }}>Brasilquímica</small>
         </Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>

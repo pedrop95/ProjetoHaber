@@ -24,16 +24,16 @@ class DetalheAnaliseInline(admin.TabularInline):
 @admin.register(RegistroAnalise)
 class RegistroAnaliseAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'produto_mat_prima', 'data_analise', 'lote', 'status',
+        'id', 'produto_mat_prima', 'id_ou_op', 'data_analise', 'lote', 'status',
         'data_producao', 'data_validade', 'fornecedor', 'nota_fiscal'
     )
-    search_fields = ('lote', 'produto_mat_prima__nome', 'fornecedor', 'nota_fiscal')
+    search_fields = ('id_ou_op', 'lote', 'produto_mat_prima__nome', 'fornecedor', 'nota_fiscal')
     list_filter = ('data_analise', 'produto_mat_prima', 'status')
     date_hierarchy = 'data_analise'
 
     fieldsets = (
         (None, {
-            'fields': ('produto_mat_prima', 'data_analise', 'status')
+            'fields': ('produto_mat_prima', 'id_ou_op', 'data_analise', 'status')
         }),
         ('Informações de Lote e Fornecedor', {
             'fields': ('lote', 'nota_fiscal', 'fornecedor', 'data_producao', 'data_validade'),

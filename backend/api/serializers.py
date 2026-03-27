@@ -19,24 +19,10 @@ class ElementoQuimicoSerializer(serializers.ModelSerializer):
 class ConfiguracaoElementoDetalheSerializer(serializers.ModelSerializer):
     elemento_quimico_nome = serializers.CharField(source='elemento_quimico.nome', read_only=True)
     elemento_quimico_simbolo = serializers.CharField(source='elemento_quimico.simbolo', read_only=True)
-    diluicao1_X = serializers.DecimalField(max_digits=10, decimal_places=4, required=True, coerce_to_string=False)
-    diluicao1_Y = serializers.DecimalField(max_digits=10, decimal_places=4, required=True, coerce_to_string=False)
-    diluicao2_X = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True, coerce_to_string=False)
-    diluicao2_Y = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True, coerce_to_string=False)
-    limite_min = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True, coerce_to_string=False)
-    limite_max = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True, coerce_to_string=False)
 
     class Meta:
         model = ConfiguracaoElementoDetalhe
-        fields = [
-            'id', 'configuracao_analise', 'elemento_quimico',
-            'elemento_quimico_nome', 'elemento_quimico_simbolo',
-            'diluicao1_X', 'diluicao1_Y', 'diluicao2_X', 'diluicao2_Y',
-            'limite_min', 'limite_max'
-        ]
-        extra_kwargs = {
-            'configuracao_analise': {'read_only': True}
-        }
+        fields = '__all__'
 
 
 # Serializer para ConfiguracaoAnalise
@@ -45,22 +31,14 @@ class ConfiguracaoAnaliseSerializer(serializers.ModelSerializer):
     produto_mat_prima_id_ou_op = serializers.CharField(source='produto_mat_prima.id_ou_op', read_only=True)
     
     # Campo aninhado para lidar com os detalhes dos elementos
-    # IMPORTANTE: `read_only=False` é o padrão, mas `required=True` pode ser um problema se os detalhes forem opcionais
-    # `many=True` indica que é uma lista de objetos
-    # `allow_empty=False` garante que a lista de detalhes não pode ser vazia ao criar
-    detalhes_elementos = ConfiguracaoElementoDetalheSerializer(many=True, required=True, write_only=True)
-    def validate(self, data):
-        print("\n--- DEBUG ConfiguracaoAnaliseSerializer.validate ---")
-        print("Dados sendo validados na configuracao de analise:", data)
-        print("--- FIM DEBUG ConfiguracaoAnaliseSerializer.validate ---\n")
-        return data
+    detalhes_elementos = ConfiguracaoElementoDetalheSerializer(many=True, read_only=True)
+    
     class Meta:
         model = ConfiguracaoAnalise
         fields = [
             'id', 'produto_mat_prima', 'produto_mat_prima_nome', 'produto_mat_prima_id_ou_op',
             'detalhes_elementos'
         ]
-        # Remova quaisquer outros fields aqui, especialmente se você tentou adicionar os campos de diluição/limite/elemento_quimico diretamente.
     
     # MÉTODOS create e update são essenciais para lidar com a escrita de campos aninhados
     def create(self, validated_data):
@@ -114,8 +92,48 @@ class DetalheAnaliseSerializer(serializers.ModelSerializer):
     configuracao_elemento_detalhe_elemento_simbolo = serializers.CharField(source='configuracao_elemento_detalhe.elemento_quimico.simbolo', read_only=True)
     configuracao_elemento_detalhe_diluicao1_X = serializers.DecimalField(source='configuracao_elemento_detalhe.diluicao1_X', max_digits=10, decimal_places=4, read_only=True)
     configuracao_elemento_detalhe_diluicao1_Y = serializers.DecimalField(source='configuracao_elemento_detalhe.diluicao1_Y', max_digits=10, decimal_places=4, read_only=True)
+    configuracao_elemento_detalhe_diluicao2_X = serializers.DecimalField(source='configuracao_elemento_detalhe.diluicao2_X', max_digits=10, decimal_places=4, required=False, allow_null=True, read_only=True)
+    configuracao_elemento_detalhe_diluicao2_Y = serializers.DecimalField(source='configuracao_elemento_detalhe.diluicao2_Y', max_digits=10, decimal_places=4, required=False, allow_null=True, read_only=True)
     massa_pesada = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True)
     absorbancia_medida = serializers.DecimalField(max_digits=10, decimal_places=4, required=False, allow_null=True)
+    concentracao_ppm = serializers.SerializerMethodField(read_only=True)
+    concentracao_porcentagem = serializers.SerializerMethodField(read_only=True)
+
+    def get_concentracao_ppm(self, obj):
+        if obj.resultado is not None:
+            return obj.resultado
+
+        if obj.absorbancia_medida is None or obj.massa_pesada is None:
+            return None
+
+        try:
+            abs_val = float(obj.absorbancia_medida)
+            massa_val = float(obj.massa_pesada)
+            dil1_y = getattr(obj.configuracao_elemento_detalhe, 'diluicao1_Y', None)
+            dil2_x = getattr(obj.configuracao_elemento_detalhe, 'diluicao2_X', None)
+            dil2_y = getattr(obj.configuracao_elemento_detalhe, 'diluicao2_Y', None)
+
+            if dil1_y is None or float(dil1_y) == 0:
+                return None
+
+            vol1 = float(dil1_y)
+            denominador = massa_val / vol1
+
+            if dil2_x is not None and dil2_y is not None and float(dil2_y) != 0:
+                denominador *= (float(dil2_x) / float(dil2_y))
+
+            if denominador == 0:
+                return None
+
+            return abs_val / denominador
+        except (ValueError, TypeError):
+            return None
+
+    def get_concentracao_porcentagem(self, obj):
+        ppm = self.get_concentracao_ppm(obj)
+        if ppm is None:
+            return None
+        return ppm / 10000
 
     class Meta:
         model = DetalheAnalise
@@ -123,7 +141,9 @@ class DetalheAnaliseSerializer(serializers.ModelSerializer):
             'id', 'registro_analise', 'configuracao_elemento_detalhe',
             'configuracao_elemento_detalhe_elemento_nome', 'configuracao_elemento_detalhe_elemento_simbolo',
             'configuracao_elemento_detalhe_diluicao1_X', 'configuracao_elemento_detalhe_diluicao1_Y',
-            'massa_pesada', 'absorbancia_medida', 'resultado'
+            'configuracao_elemento_detalhe_diluicao2_X', 'configuracao_elemento_detalhe_diluicao2_Y',
+            'massa_pesada', 'absorbancia_medida', 'resultado',
+            'concentracao_ppm', 'concentracao_porcentagem'
         ]
         # Certifique-se que o FK registro_analise não seja required na escrita aninhada
         extra_kwargs = {
@@ -141,7 +161,7 @@ class RegistroAnaliseSerializer(serializers.ModelSerializer):
         model = RegistroAnalise
         fields = [
             'id', 'produto_mat_prima', 'produto_mat_prima_nome', 'produto_mat_prima_id_ou_op',
-            'data_analise', 'analista', 'status', 'detalhes'
+            'data_analise', 'analista', 'status', 'fornecedor', 'lote', 'nf', 'veredito', 'detalhes'
         ]
 
     def create(self, validated_data):
@@ -159,6 +179,10 @@ class RegistroAnaliseSerializer(serializers.ModelSerializer):
         instance.data_analise = validated_data.get('data_analise', instance.data_analise)
         instance.analista = validated_data.get('analista', instance.analista)
         instance.status = validated_data.get('status', instance.status)
+        instance.fornecedor = validated_data.get('fornecedor', instance.fornecedor)
+        instance.lote = validated_data.get('lote', instance.lote)
+        instance.nf = validated_data.get('nf', instance.nf)
+        instance.veredito = validated_data.get('veredito', instance.veredito)
         instance.save()
 
         # Lógica para atualizar/criar/deletar os detalhes da análise

@@ -12,6 +12,13 @@ class RegistroAnalise(models.Model):
     ]
 
     produto_mat_prima = models.ForeignKey(ProdutoMatPrima, on_delete=models.CASCADE, related_name='registros_analise')
+    id_ou_op = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name="ID ou OP",
+        help_text="ID ou OP específico desta análise"
+    )
     data_analise = models.DateField()
     data_producao = models.DateField(null=True, blank=True)
     data_validade = models.DateField(null=True, blank=True)
@@ -27,7 +34,25 @@ class RegistroAnalise(models.Model):
     )
 
     def __str__(self):
-        return f"Análise {self.lote} - {self.produto_mat_prima.nome} ({self.data_analise})"
+        id_op_str = f" ({self.id_ou_op})" if self.id_ou_op else ""
+        return f"Análise {self.id_ou_op or self.lote} - {self.produto_mat_prima.nome}{id_op_str} ({self.data_analise})"
+
+    def save(self, *args, **kwargs):
+        """
+        Gera ID/OP automaticamente se não for fornecido pelo usuário.
+        Usa o ID do banco de dados para manter sequência.
+        """
+        # Se id_ou_op não foi fornecido ou está vazio, gera automaticamente
+        if not self.id_ou_op or self.id_ou_op.strip() == '':
+            # Primeiro, salva o registro para obter um ID do banco de dados
+            super().save(*args, **kwargs)
+            # Então gera o ID/OP baseado no ID do registro
+            self.id_ou_op = f"OP-{self.id:06d}"
+            # Salva novamente com o ID/OP gerado
+            super().save(update_fields=['id_ou_op'])
+        else:
+            # Se o usuário forneceu um ID/OP, apenas salva normalmente
+            super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Registro de Análise"

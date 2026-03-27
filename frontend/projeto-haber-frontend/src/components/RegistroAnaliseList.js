@@ -6,7 +6,23 @@ import { Link } from 'react-router-dom';
 
 function RegistroAnaliseList() {
     const [registros, setRegistros] = useState([]);
-    const [expandedId, setExpandedId] = useState(null);
+
+    // estados do input antes de aplicar filtro
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [vereditoFilter, setVereditoFilter] = useState('');
+    const [fornecedorFilter, setFornecedorFilter] = useState('');
+    const [loteFilter, setLoteFilter] = useState('');
+    const [nfFilter, setNfFilter] = useState('');
+
+    // estados aplicados
+    const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
+    const [appliedStatusFilter, setAppliedStatusFilter] = useState('');
+    const [appliedVereditoFilter, setAppliedVereditoFilter] = useState('');
+    const [appliedFornecedorFilter, setAppliedFornecedorFilter] = useState('');
+    const [appliedLoteFilter, setAppliedLoteFilter] = useState('');
+    const [appliedNfFilter, setAppliedNfFilter] = useState('');
+
     const API_URL = 'http://localhost:8000/api/registros-analise/';
 
     useEffect(() => {
@@ -51,13 +67,134 @@ function RegistroAnaliseList() {
         }
     };
 
-    const toggleExpand = (id) => {
-        setExpandedId(expandedId === id ? null : id);
+    const getVereditoLabel = (veredito) => {
+        switch (veredito) {
+            case 'APROVADO':
+                return 'Aprovado';
+            case 'APROVADO_COM_RESCALVAS':
+                return 'Aprovado com ressalvas';
+            case 'REPROVADO':
+                return 'Reprovado';
+            default:
+                return '-';
+        }
     };
+
+    const filteredRegistros = registros.filter(registro => {
+        const term = appliedSearchTerm.trim().toLowerCase();
+        const fullText = `${registro.id} ${registro.produto_mat_prima_nome} ${new Date(registro.data_analise).toLocaleDateString()} ${registro.status} ${getVereditoLabel(registro.veredito)} ${registro.analista} ${registro.fornecedor || ''} ${registro.lote || ''} ${registro.nf || ''}`.toLowerCase();
+
+        const matchesSearch = term === '' || fullText.includes(term);
+        const matchesStatus = appliedStatusFilter === '' || registro.status === appliedStatusFilter;
+        const matchesVeredito = appliedVereditoFilter === '' || registro.veredito === appliedVereditoFilter;
+        const matchesFornecedor = appliedFornecedorFilter === '' || (registro.fornecedor || '').toLowerCase().includes(appliedFornecedorFilter.toLowerCase());
+        const matchesLote = appliedLoteFilter === '' || (registro.lote || '').toLowerCase().includes(appliedLoteFilter.toLowerCase());
+        const matchesNf = appliedNfFilter === '' || (registro.nf || '').toLowerCase().includes(appliedNfFilter.toLowerCase());
+
+        return matchesSearch && matchesStatus && matchesVeredito && matchesFornecedor && matchesLote && matchesNf;
+    });
 
     return (
         <div className="container mt-4">
-            <h2 className="mb-4">Lista de Registros de Análise</h2>
+            <h2 className="mb-4">Registros de Análise</h2>
+            <div className="row mb-3">
+                <div className="col-md-4 mb-2">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Buscar por ID, produto, data, status, veredito, analista..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-2 mb-2">
+                    <select
+                        className="form-select"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="">Filtro por status</option>
+                        <option value="EM_ANDAMENTO">Em Andamento</option>
+                        <option value="CONCLUIDO">Concluído</option>
+                        <option value="CANCELADO">Cancelado</option>
+                    </select>
+                </div>
+                <div className="col-md-2 mb-2">
+                    <select
+                        className="form-select"
+                        value={vereditoFilter}
+                        onChange={(e) => setVereditoFilter(e.target.value)}
+                    >
+                        <option value="">Filtro por veredito</option>
+                        <option value="APROVADO">Aprovado</option>
+                        <option value="APROVADO_COM_RESCALVAS">Aprovado com ressalvas</option>
+                        <option value="REPROVADO">Reprovado</option>
+                    </select>
+                </div>
+                <div className="col-md-2 mb-2">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Fornecedor"
+                        value={fornecedorFilter}
+                        onChange={(e) => setFornecedorFilter(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-2 mb-2">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Lote"
+                        value={loteFilter}
+                        onChange={(e) => setLoteFilter(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-2 mb-2">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="NF"
+                        value={nfFilter}
+                        onChange={(e) => setNfFilter(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-2 mb-2">
+                    <button
+                        className="btn btn-primary w-100"
+                        onClick={() => {
+                            setAppliedSearchTerm(searchTerm);
+                            setAppliedStatusFilter(statusFilter);
+                            setAppliedVereditoFilter(vereditoFilter);
+                            setAppliedFornecedorFilter(fornecedorFilter);
+                            setAppliedLoteFilter(loteFilter);
+                            setAppliedNfFilter(nfFilter);
+                        }}
+                    >
+                        Aplicar filtros
+                    </button>
+                </div>
+                <div className="col-md-2 mb-2">
+                    <button
+                        className="btn btn-outline-secondary w-100"
+                        onClick={() => {
+                            setSearchTerm('');
+                            setStatusFilter('');
+                            setVereditoFilter('');
+                            setFornecedorFilter('');
+                            setLoteFilter('');
+                            setNfFilter('');
+                            setAppliedSearchTerm('');
+                            setAppliedStatusFilter('');
+                            setAppliedVereditoFilter('');
+                            setAppliedFornecedorFilter('');
+                            setAppliedLoteFilter('');
+                            setAppliedNfFilter('');
+                        }}
+                    >
+                        Limpar filtros
+                    </button>
+                </div>
+            </div>
             <Link to="/registros-analise/add" className="btn btn-success mb-4">Adicionar Novo Registro de Análise</Link>
 
             <div className="card">
@@ -71,27 +208,29 @@ function RegistroAnaliseList() {
                                         <th>Produto</th>
                                         <th>Data Análise</th>
                                         <th>Status</th>
+                                        <th>Fornecedor</th>
+                                        <th>Lote</th>
+                                        <th>NF</th>
+                                        <th>Veredito</th>
                                         <th>Analista</th>
                                         <th className="text-center">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {registros.map(registro => (
+                                    {filteredRegistros.map(registro => (
                                         <React.Fragment key={registro.id}>
                                             <tr>
                                                 <td>{registro.id}</td>
                                                 <td>{registro.produto_mat_prima_nome}</td>
                                                 <td>{new Date(registro.data_analise).toLocaleDateString()}</td>
                                                 <td>{getStatusBadge(registro.status)}</td>
+                                                <td>{registro.fornecedor || '-'}</td>
+                                                <td>{registro.lote || '-'}</td>
+                                                <td>{registro.nf || '-'}</td>
+                                                <td>{getVereditoLabel(registro.veredito)}</td>
                                                 <td>{registro.analista}</td>
                                                 <td className="text-center">
-                                                    <button
-                                                        onClick={() => toggleExpand(registro.id)}
-                                                        className="btn btn-sm btn-outline-primary me-2"
-                                                        title="Expandir/Retrair detalhes"
-                                                    >
-                                                        {expandedId === registro.id ? '−' : '+'}
-                                                    </button>
+                                                    <Link to={`/registros-analise/view/${registro.id}`} className="btn btn-sm btn-outline-primary me-2">Visualizar</Link>
                                                     <Link to={`/registros-analise/edit/${registro.id}`} className="btn btn-sm btn-info me-2">Editar</Link>
                                                     <button
                                                         onClick={() => handleDelete(registro.id)}
@@ -101,59 +240,6 @@ function RegistroAnaliseList() {
                                                     </button>
                                                 </td>
                                             </tr>
-                                            {expandedId === registro.id && (
-                                                <tr>
-                                                    <td colSpan="6">
-                                                        <div className="p-3 bg-light">
-                                                            <h6>Detalhes da Análise:</h6>
-                                                            {registro.detalhes && registro.detalhes.length > 0 ? (
-                                                                <table className="table table-sm table-bordered">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Elemento</th>
-                                                                            <th>Absorbância</th>
-                                                                            <th>Massa Pesada</th>
-                                                                            <th>Vol. Final Diluição 1</th>
-                                                                            <th>Vol. Inic. Diluição 2</th>
-                                                                            <th>Vol. Final Diluição 2</th>
-                                                                            <th>Concentração (ppm)</th>
-                                                                            <th>Concentração (%)</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {registro.detalhes.map((detalhe, idx) => (
-                                                                            <tr key={idx}>
-                                                                                <td>{detalhe.elemento_quimico_nome}</td>
-                                                                                <td>{detalhe.absorbancia_medida ? Number(detalhe.absorbancia_medida).toFixed(4) : 'N/A'}</td>
-                                                                                <td>{detalhe.massa_pesada ? Number(detalhe.massa_pesada).toFixed(4) : 'N/A'}</td>
-                                                                                <td>{detalhe.volume_final_diluicao_1 ? Number(detalhe.volume_final_diluicao_1).toFixed(4) : 'N/A'}</td>
-                                                                                <td>{detalhe.volume_inicial_diluicao_2 ? Number(detalhe.volume_inicial_diluicao_2).toFixed(4) : '-'}</td>
-                                                                                <td>{detalhe.volume_final_diluicao_2 ? Number(detalhe.volume_final_diluicao_2).toFixed(4) : '-'}</td>
-                                                                                <td>
-                                                                                    <strong>
-                                                                                        {detalhe.concentracao_ppm !== null && detalhe.concentracao_ppm !== undefined
-                                                                                            ? `${Number(detalhe.concentracao_ppm).toFixed(6)} ppm`
-                                                                                            : 'Dados incompletos'}
-                                                                                    </strong>
-                                                                                </td>
-                                                                                <td>
-                                                                                    <strong>
-                                                                                        {detalhe.concentracao_porcentagem !== null && detalhe.concentracao_porcentagem !== undefined
-                                                                                            ? `${Number(detalhe.concentracao_porcentagem).toFixed(8)} %`
-                                                                                            : 'Dados incompletos'}
-                                                                                    </strong>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
-                                                            ) : (
-                                                                <p className="text-muted">Sem detalhes registrados.</p>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
                                         </React.Fragment>
                                     ))}
                                 </tbody>

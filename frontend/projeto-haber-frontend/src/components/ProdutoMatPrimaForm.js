@@ -80,7 +80,7 @@ function ProdutoMatPrimaForm() {
                             />
                         </div>
                         <div className="mb-3">
-                            <label htmlFor="id_ou_op" className="form-label">ID ou OP</label>
+                            <label htmlFor="id_ou_op" className="form-label">ID ou OP <span className="text-muted">(opcional)</span></label>
                             <input
                                 type="text"
                                 className="form-control"
@@ -88,7 +88,6 @@ function ProdutoMatPrimaForm() {
                                 name="id_ou_op"
                                 value={produto.id_ou_op}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
                         <button type="submit" className="btn btn-primary mt-3">

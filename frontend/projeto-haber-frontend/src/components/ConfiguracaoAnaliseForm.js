@@ -100,15 +100,6 @@ function ConfiguracaoAnaliseForm() {
         } else if (name === "elemento_quimico") {
             // Certifica-se de que o ID do elemento é tratado como string no estado, mas será Number no submit
             parsedValue = value; 
-            const selectedElementoId = value;
-            const existingElementosInForm = newDetalhesElementos
-                .filter((_, i) => i !== index) // Excluir o item atual da verificação
-                .map(detalhe => detalhe.elemento_quimico);
-
-            if (selectedElementoId && existingElementosInForm.includes(selectedElementoId)) { // Adicionado selectedElementoId && para evitar alerta ao selecionar a opção vazia
-                alert('Este elemento químico já foi adicionado a esta configuração. Por favor, selecione outro ou edite o existente.');
-                parsedValue = ''; // Resetar a seleção se duplicado
-            }
         }
         
         newDetalhesElementos[index][name] = parsedValue;
@@ -207,13 +198,9 @@ function ConfiguracaoAnaliseForm() {
         }
     };
 
-    // Função para filtrar elementos já selecionados
-    const getAvailableElementos = (currentIndex) => {
-        const selectedElementIds = configuracao.detalhes_elementos
-            .filter((_, i) => i !== currentIndex) // Exclui o elemento que está sendo editado atualmente
-            .map(detalhe => String(detalhe.elemento_quimico)); // Converte para String para comparação consistente
-        
-        return elementosDisponiveis.filter(elemento => !selectedElementIds.includes(String(elemento.id)));
+    // Função para obter todos os elementos disponíveis (agora permite duplicatas)
+    const getAvailableElementos = () => {
+        return elementosDisponiveis;
     };
 
 
@@ -262,17 +249,9 @@ function ConfiguracaoAnaliseForm() {
                                             required
                                         >
                                             <option value="">Selecione um Elemento</option>
-                                            {getAvailableElementos(index).map(elemento => (
+                                            {getAvailableElementos().map(elemento => (
                                                 <option key={elemento.id} value={elemento.id}>{elemento.nome} ({elemento.simbolo})</option>
                                             ))}
-                                            {/* Se o elemento atual já estiver selecionado, ele ainda deve aparecer na lista para não sumir ao editar */}
-                                            {detalhe.elemento_quimico && elementosDisponiveis.find(e => String(e.id) === String(detalhe.elemento_quimico)) &&
-                                                !getAvailableElementos(index).find(e => String(e.id) === String(detalhe.elemento_quimico)) && (
-                                                    <option value={detalhe.elemento_quimico}>
-                                                        {elementosDisponiveis.find(e => String(e.id) === String(detalhe.elemento_quimico))?.nome} ({elementosDisponiveis.find(e => String(e.id) === String(detalhe.elemento_quimico))?.simbolo})
-                                                    </option>
-                                                )
-                                            }
                                         </select>
                                     </div>
                                 </div>
